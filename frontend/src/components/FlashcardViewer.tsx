@@ -75,6 +75,12 @@ export const FlashcardViewer: React.FC = () => {
             <RotateCcw size={20} />
             Regenerar
           </button>
+          {documentId && (
+            <Link to={`/chat?doc=${documentId}`} className="btn btn-primary">
+              <Sparkles size={20} />
+              Chat com IA
+            </Link>
+          )}
           <Link to="/" className="btn btn-secondary">
             <Home size={20} />
             Dashboard
@@ -125,7 +131,7 @@ export const FlashcardViewer: React.FC = () => {
                 transition={{ duration: 0.3 }}
               >
                 <div
-                  className={`flashcard glass ${isFlipped ? 'flipped' : ''}`}
+                  className={`flashcard ${isFlipped ? 'flipped' : ''}`}
                   onClick={handleFlip}
                 >
                   <div className="flashcard-inner">
@@ -307,11 +313,9 @@ export const FlashcardViewer: React.FC = () => {
           height: 400px;
           position: relative;
           cursor: pointer;
-          transition: transform 0.6s;
-          transform-style: preserve-3d;
         }
 
-        .flashcard.flipped {
+        .flashcard.flipped .flashcard-inner {
           transform: rotateY(180deg);
         }
 
@@ -319,6 +323,9 @@ export const FlashcardViewer: React.FC = () => {
           position: relative;
           width: 100%;
           height: 100%;
+          text-align: center;
+          transition: transform 0.6s;
+          transform-style: preserve-3d;
         }
 
         .flashcard-front,
@@ -326,21 +333,27 @@ export const FlashcardViewer: React.FC = () => {
           position: absolute;
           width: 100%;
           height: 100%;
+          -webkit-backface-visibility: hidden;
           backface-visibility: hidden;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 2.5rem;
-          background: var(--glass-bg);
-          backdrop-filter: var(--glass-blur);
+          background: var(--color-bg-secondary);
           border: 2px solid var(--glass-border);
           border-radius: var(--radius-xl);
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .flashcard-front {
+            z-index: 2;
+            transform: rotateY(0deg);
         }
 
         .flashcard-back {
           transform: rotateY(180deg);
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)), var(--color-bg-secondary);
         }
 
         .card-label {
@@ -360,6 +373,7 @@ export const FlashcardViewer: React.FC = () => {
           flex: 1;
           display: flex;
           align-items: center;
+          justify-content: center;
         }
 
         .flip-hint {
