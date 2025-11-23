@@ -5,151 +5,155 @@ import { askQuestion, type QueryResponse } from '../services/api';
 import { Link, useSearchParams } from 'react-router-dom';
 
 interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    sources?: QueryResponse['sources'];
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: QueryResponse['sources'];
 }
 
-export const ChatInterface: React.FC = () => {
-    const [searchParams] = useSearchParams();
-    const documentId = searchParams.get('doc');
+interface ChatInterfaceProps {
+  documentId?: string;
+}
 
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDocumentId }) => {
+  const [searchParams] = useSearchParams();
+  const documentId = propDocumentId || searchParams.get('doc');
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || isLoading) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: input.trim(),
-        };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
 
-        setMessages(prev => [...prev, userMessage]);
-        setInput('');
-        setIsLoading(true);
-
-        try {
-            const response = await askQuestion(
-                userMessage.content,
-                documentId ? [documentId] : undefined
-            );
-
-            const assistantMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: response.answer,
-                sources: response.sources,
-            };
-
-            setMessages(prev => [...prev, assistantMessage]);
-        } catch (error: any) {
-            const errorMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: `Erro: ${error.response?.data?.error || error.message}`,
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
-            setIsLoading(false);
-        }
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
     };
 
-    return (
-        <div className="chat-container">
-            <div className="chat-header glass">
-                <div>
-                    <h1 className="gradient-text">Assistente de Estudos</h1>
-                    <p>Faça perguntas sobre seus documentos</p>
-                </div>
-                <Link to="/" className="btn btn-secondary">
-                    <Home size={20} />
-                    Dashboard
-                </Link>
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await askQuestion(
+        userMessage.content,
+        documentId ? [documentId] : undefined
+      );
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.answer,
+        sources: response.sources,
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error: any) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Erro: ${error.response?.data?.error || error.message}`,
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="chat-container">
+      <div className="chat-header glass">
+        <div>
+          <h1 className="gradient-text">Assistente de Estudos</h1>
+          <p>Faça perguntas sobre seus documentos</p>
+        </div>
+        <Link to="/" className="btn btn-secondary">
+          <Home size={20} />
+          Dashboard
+        </Link>
+      </div>
+
+      <div className="chat-messages">
+        {messages.length === 0 ? (
+          <div className="chat-empty">
+            <Bot size={64} style={{ opacity: 0.5 }} />
+            <h2>Olá! Como posso ajudar?</h2>
+            <p>Faça perguntas sobre o conteúdo dos seus documentos PDF</p>
+            <div className="suggestions">
+              <button
+                onClick={() => setInput('Resuma os principais conceitos do documento')}
+                className="suggestion-chip"
+              >
+                Resumir documento
+              </button>
+              <button
+                onClick={() => setInput('Quais são os pontos mais importantes?')}
+                className="suggestion-chip"
+              >
+                Pontos importantes
+              </button>
+              <button
+                onClick={() => setInput('Explique o tema principal')}
+                className="suggestion-chip"
+              >
+                Tema principal
+              </button>
             </div>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} />
+            ))}
+          </AnimatePresence>
+        )}
 
-            <div className="chat-messages">
-                {messages.length === 0 ? (
-                    <div className="chat-empty">
-                        <Bot size={64} style={{ opacity: 0.5 }} />
-                        <h2>Olá! Como posso ajudar?</h2>
-                        <p>Faça perguntas sobre o conteúdo dos seus documentos PDF</p>
-                        <div className="suggestions">
-                            <button
-                                onClick={() => setInput('Resuma os principais conceitos do documento')}
-                                className="suggestion-chip"
-                            >
-                                Resumir documento
-                            </button>
-                            <button
-                                onClick={() => setInput('Quais são os pontos mais importantes?')}
-                                className="suggestion-chip"
-                            >
-                                Pontos importantes
-                            </button>
-                            <button
-                                onClick={() => setInput('Explique o tema principal')}
-                                className="suggestion-chip"
-                            >
-                                Tema principal
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <AnimatePresence>
-                        {messages.map((message) => (
-                            <MessageBubble key={message.id} message={message} />
-                        ))}
-                    </AnimatePresence>
-                )}
-
-                {isLoading && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="message assistant"
-                    >
-                        <div className="message-avatar">
-                            <Bot size={24} />
-                        </div>
-                        <div className="message-content">
-                            <Loader2 className="spinning" size={20} />
-                            <span>Pensando...</span>
-                        </div>
-                    </motion.div>
-                )}
-
-                <div ref={messagesEndRef} />
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="message assistant"
+          >
+            <div className="message-avatar">
+              <Bot size={24} />
             </div>
+            <div className="message-content">
+              <Loader2 className="spinning" size={20} />
+              <span>Pensando...</span>
+            </div>
+          </motion.div>
+        )}
 
-            <form onSubmit={handleSubmit} className="chat-input-form glass">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Digite sua pergunta..."
-                    disabled={isLoading}
-                    autoFocus
-                />
-                <button
-                    type="submit"
-                    disabled={!input.trim() || isLoading}
-                    className="btn btn-primary send-btn"
-                >
-                    <Send size={20} />
-                </button>
-            </form>
+        <div ref={messagesEndRef} />
+      </div>
 
-            <style>{`
+      <form onSubmit={handleSubmit} className="chat-input-form glass">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Digite sua pergunta..."
+          disabled={isLoading}
+          autoFocus
+        />
+        <button
+          type="submit"
+          disabled={!input.trim() || isLoading}
+          className="btn btn-primary send-btn"
+        >
+          <Send size={20} />
+        </button>
+      </form>
+
+      <style>{`
         .chat-container {
           max-width: 1000px;
           margin: 0 auto;
@@ -321,39 +325,39 @@ export const ChatInterface: React.FC = () => {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 interface MessageBubbleProps {
-    message: Message;
+  message: Message;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => (
-    <motion.div
-        className={`message ${message.role}`}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-    >
-        <div className="message-avatar">
-            {message.role === 'user' ? <User size={24} /> : <Bot size={24} />}
+  <motion.div
+    className={`message ${message.role}`}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+  >
+    <div className="message-avatar">
+      {message.role === 'user' ? <User size={24} /> : <Bot size={24} />}
+    </div>
+    <div className="message-content">
+      <div>{message.content}</div>
+      {message.sources && message.sources.length > 0 && (
+        <div className="sources">
+          <div className="sources-title">
+            <BookOpen size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+            Fontes consultadas
+          </div>
+          {message.sources.slice(0, 3).map((source, idx) => (
+            <div key={source.chunkId} className="source-item">
+              📄 Página {source.pageNumber} · Similaridade: {(source.similarity * 100).toFixed(0)}%
+            </div>
+          ))}
         </div>
-        <div className="message-content">
-            <div>{message.content}</div>
-            {message.sources && message.sources.length > 0 && (
-                <div className="sources">
-                    <div className="sources-title">
-                        <BookOpen size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                        Fontes consultadas
-                    </div>
-                    {message.sources.slice(0, 3).map((source, idx) => (
-                        <div key={source.chunkId} className="source-item">
-                            📄 Página {source.pageNumber} · Similaridade: {(source.similarity * 100).toFixed(0)}%
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    </motion.div>
+      )}
+    </div>
+  </motion.div>
 );

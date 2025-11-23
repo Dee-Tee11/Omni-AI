@@ -1,0 +1,109 @@
+.civilization-path-container {
+    width: 100%;
+    overflow-x: auto;
+    padding: 2rem 1rem;
+    background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;
+    position: relative;
+}
+
+.path-track {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    min-width: max-content;
+    padding: 0 2rem;
+    position: relative;
+}
+
+/* Connecting line */
+.path-track::before {
+    content: '';
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    top: 50%;
+    height: 4px;
+    background-color: #d1fae5;
+    z-index: 0;
+    transform: translateY(-50%);
+}
+
+.level-node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.level-node:hover {
+    transform: scale(1.1);
+}
+
+.node-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 4px solid #d1fae5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #9ca3af;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.level-node.unlocked .node-circle {
+    border-color: #10b981;
+    color: #059669;
+    background-color: #ecfdf5;
+}
+
+.level-node.current .node-circle {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+    color: #d97706;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+    transform: scale(1.1);
+}
+
+.level-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+    max-width: 100px;
+}
+
+.level-node.current .level-label {
+    color: #d97706;
+}
+
+.level-node.unlocked .level-label {
+    color: #059669;
+}
+
+.xp-bar {
+    position: absolute;
+    bottom: -1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.xp-fill {
+    height: 100%;
+    background-color: #10b981;
+    border-radius: 99px;
+}

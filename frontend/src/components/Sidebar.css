@@ -1,0 +1,221 @@
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Mini Sidebar Mode */
+.sidebar-mini {
+    width: 80px;
+    padding: 1rem;
+}
+
+.sidebar-mini .nav-link {
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+/* Hide on Mobile */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none !important;
+    }
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.sidebar-logo {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-logo span {
+    color: var(--color-text-primary);
+}
+
+/* Collapse Button */
+.collapse-btn {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapse-btn:hover {
+    background-color: #f3f4f6;
+    color: var(--color-primary);
+}
+
+.generate-btn {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: none;
+    border-radius: 99px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.generate-btn:hover {
+    background-color: #a7f3d0;
+    transform: translateY(-1px);
+}
+
+/* Mini Generate Button */
+.generate-btn-mini {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.generate-btn-mini:hover {
+    background-color: #a7f3d0;
+    transform: translateY(-1px);
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    color: #4b5563;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background-color: #f3f4f6;
+    color: var(--color-primary);
+}
+
+.nav-link.active {
+    background-color: #ecfdf5;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.nav-link svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.75rem;
+    transition: background-color 0.2s;
+}
+
+.sidebar-mini .user-profile {
+    justify-content: center;
+}
+
+.sidebar-mini .user-info {
+    display: none;
+}
+
+.user-profile:hover {
+    background-color: #f3f4f6;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #fcd34d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.streak-widget {
+    margin-top: 1rem;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #b45309;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.streak-fire {
+    color: #f59e0b;
+}

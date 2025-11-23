@@ -4,9 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateFlashcards, type Flashcard, type FlashcardSet } from '../services/api';
 import { Link, useSearchParams } from 'react-router-dom';
 
-export const FlashcardViewer: React.FC = () => {
+interface FlashcardViewerProps {
+  documentId?: string;
+}
+
+export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: propDocumentId }) => {
   const [searchParams] = useSearchParams();
-  const documentId = searchParams.get('doc');
+  const documentId = propDocumentId || searchParams.get('doc');
 
   const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);

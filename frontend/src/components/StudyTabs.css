@@ -1,0 +1,68 @@
+.study-tabs-container {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+/* Tab Headers */
+.tab-headers {
+    display: flex;
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 0.5rem;
+    gap: 0.5rem;
+}
+
+.tab-header {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-header:hover {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+}
+
+.tab-header.active {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    color: white;
+    box-shadow: 0 4px 12px -2px rgba(124, 58, 237, 0.3);
+}
+
+.tab-header svg {
+    flex-shrink: 0;
+}
+
+.tab-header span {
+    white-space: nowrap;
+}
+
+/* Tab Content */
+.tab-content {
+    padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tab-header span {
+        display: none;
+    }
+
+    .tab-header {
+        padding: 0.75rem;
+    }
+}

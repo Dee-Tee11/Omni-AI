@@ -5,3 +5,4 @@ uploads/
 chroma_db/
 *.log
 .DS_Store
+.*env.example

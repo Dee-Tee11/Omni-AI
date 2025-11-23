@@ -1,320 +1,249 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Brain, Sparkles, TrendingUp, Upload as UploadIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UploadZone } from './UploadZone';
-import { getDocuments, getStats, type Document } from '../services/api';
-import { Link } from 'react-router-dom';
+import { FlashcardViewer } from './FlashcardViewer';
+import { StudyTabs } from './StudyTabs';
+import { ChatInterface } from './ChatInterface';
+import CivilizationPath from './CivilizationPath';
+import { useGamification } from '../context/GamificationContext';
+import { Book, Archive, Hammer, Plus, FileText, Trash2, X } from 'lucide-react';
+import { getDocuments, deleteDocument, type Document } from '../services/api';
+import './Dashboard.css';
 
-export const Dashboard: React.FC = () => {
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [stats, setStats] = useState<any>(null);
-    const [showUpload, setShowUpload] = useState(false);
+const Dashboard: React.FC = () => {
+  const [showUpload, setShowUpload] = useState(false);
+  const [activeDocument, setActiveDocument] = useState<Document | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const { currentEra, civilizationXP } = useGamification();
 
-    useEffect(() => {
-        loadData();
-    }, []);
+  useEffect(() => {
+    loadDocuments();
+  }, []);
 
-    const loadData = async () => {
-        try {
-            const [docs, statsData] = await Promise.all([
-                getDocuments(),
-                getStats(),
-            ]);
-            setDocuments(docs);
-            setStats(statsData);
-        } catch (error) {
-            console.error('Error loading data:', error);
+  const loadDocuments = async () => {
+    try {
+      const docs = await getDocuments();
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUploadSuccess = (doc: any) => {
+    setActiveDocument(doc);
+    setShowUpload(false);
+    loadDocuments();
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('Tem certeza que deseja excluir este documento?')) {
+      try {
+        await deleteDocument(id);
+        loadDocuments();
+        if (activeDocument?.id === id) {
+          setActiveDocument(null);
         }
-    };
+      } catch (error) {
+        console.error('Error deleting document:', error);
+      }
+    }
+  };
 
-    const handleUploadSuccess = () => {
-        setShowUpload(false);
-        loadData();
-    };
+  return (
+    <div className="dashboard-container">
+      {/* Header */}
+      <header className="dashboard-header">
+        <div className="dashboard-header-content">
+          <h1>Olá, Explorador!</h1>
+          <p>Vamos construir a tua civilização hoje.</p>
+        </div>
+        <div className="dashboard-xp-badge">
+          {currentEra} • {civilizationXP} XP
+        </div>
+      </header>
 
-    return (
-        <div className="dashboard">
-            <header className="dashboard-header">
-                <div className="header-content">
-                    <h1 className="gradient-text">Omni-AI</h1>
-                    <p>Sistema Inteligente de Estudos</p>
+      {/* Main Grid */}
+      <div className="dashboard-grid">
+
+        {/* Center Hero - Builder's Kit */}
+        <div className="builders-kit-card">
+          <div className="builders-kit-gradient" />
+
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="builders-kit-content"
+          >
+            {!activeDocument ? (
+              <>
+                <div className="kit-icon-container">
+                  <Hammer size={64} className="kit-icon" />
                 </div>
+                <h2>Kit de Construção</h2>
+                <p>
+                  Selecione um documento da lista ou faça upload de um novo para começar a estudar.
+                </p>
+
                 <button
-                    className="btn btn-primary"
-                    onClick={() => setShowUpload(!showUpload)}
+                  onClick={() => setShowUpload(!showUpload)}
+                  className="add-document-btn"
                 >
-                    <UploadIcon size={20} />
-                    {showUpload ? 'Ocultar Upload' : 'Novo Documento'}
+                  <Plus size={20} />
+                  Adicionar Documento
                 </button>
-            </header>
-
-            {showUpload && (
-                <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="upload-section"
-                >
-                    <UploadZone onUploadSuccess={handleUploadSuccess} />
-                </motion.div>
+              </>
+            ) : (
+              <div style={{ width: '100%' }}>
+                <div className="active-document-header">
+                  <button
+                    onClick={() => setActiveDocument(null)}
+                    className="back-btn"
+                  >
+                    ← Voltar para o Kit
+                  </button>
+                  <h2 className="document-title">
+                    {activeDocument.filename}
+                  </h2>
+                </div>
+                <div className="document-viewer-single">
+                  <ChatInterface documentId={activeDocument.id} />
+                </div>
+              </div>
             )}
+          </motion.div>
 
-            <div className="stats-grid">
-                <StatCard
-                    icon={<FileText size={32} />}
-                    title="Documentos"
-                    value={stats?.totalDocuments || 0}
-                    color="var(--color-accent-primary)"
-                />
-                <StatCard
-                    icon={<Brain size={32} />}
-                    title="Chunks Processados"
-                    value={stats?.totalChunks || 0}
-                    color="var(--color-info)"
-                />
-                <StatCard
-                    icon={<Sparkles size={32} />}
-                    title="Pronto para RAG"
-                    value={documents.length > 0 ? 'Sim' : 'Não'}
-                    color="var(--color-success)"
-                />
-                <StatCard
-                    icon={<TrendingUp size={32} />}
-                    title="Taxa de Sucesso"
-                    value="100%"
-                    color="var(--color-accent-secondary)"
-                />
+          {/* Upload Modal Overlay */}
+          {showUpload && (
+            <div className="upload-modal-overlay">
+              <div className="upload-modal-content">
+                <UploadZone onUploadSuccess={handleUploadSuccess} />
+                <button
+                  onClick={() => setShowUpload(false)}
+                  className="cancel-btn"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Cards */}
+        <div className="sidebar-column">
+          {/* My Documents List */}
+          <div className="documents-card">
+            <div className="card-header">
+              <div className="card-icon">
+                <Book size={20} />
+              </div>
+              <h3 className="card-title">Minhas Aulas</h3>
             </div>
 
-            <section className="documents-section">
-                <h2>Seus Documentos</h2>
-                {documents.length === 0 ? (
-                    <div className="empty-state glass">
-                        <FileText size={48} style={{ opacity: 0.5 }} />
-                        <h3>Nenhum documento enviado</h3>
-                        <p>Faça upload do seu primeiro PDF para começar</p>
-                        <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
-                            <UploadIcon size={20} />
-                            Fazer Upload
-                        </button>
+            <div className="documents-list">
+              {isLoading ? (
+                <p className="loading-text">Carregando...</p>
+              ) : documents.length === 0 ? (
+                <div className="empty-state">
+                  <p>Nenhum documento ainda.</p>
+                  <p>Faça upload para começar!</p>
+                </div>
+              ) : (
+                documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    onClick={() => setActiveDocument(doc)}
+                    className={`document-item ${activeDocument?.id === doc.id ? 'active' : ''}`}
+                  >
+                    <div className="document-content">
+                      <div className="document-icon">
+                        <FileText size={18} />
+                      </div>
+                      <div className="document-info">
+                        <p className="document-name">
+                          {doc.filename}
+                        </p>
+                        <p className="document-date">
+                          {new Date(doc.uploadDate).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                ) : (
-                    <div className="documents-grid">
-                        {documents.map((doc, idx) => (
-                            <DocumentCard key={doc.id} document={doc} index={idx} />
-                        ))}
-                    </div>
-                )}
-            </section>
+                    <button
+                      onClick={(e) => handleDelete(e, doc.id)}
+                      className="delete-btn"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-            <style>{`
-        .dashboard {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 2rem;
-        }
+          {/* Study Tabs: Flashcards, Quiz, Resumo */}
+          {activeDocument && (
+            <StudyTabs
+              documentId={activeDocument.id}
+              onOpenFlashcardModal={() => setShowFlashcardModal(true)}
+            />
+          )}
 
-        .dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-        }
-
-        .header-content h1 {
-          font-size: 3rem;
-          margin: 0;
-        }
-
-        .header-content p {
-          color: var(--color-text-secondary);
-          margin: 0.5rem 0 0;
-        }
-
-        .upload-section {
-          margin-bottom: 2rem;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 1.5rem;
-          margin-bottom: 3rem;
-        }
-
-        .documents-section h2 {
-          margin-bottom: 1.5rem;
-        }
-
-        .documents-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 4rem 2rem;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .empty-state h3 {
-          margin: 0;
-        }
-
-        .empty-state p {
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        @media (max-width: 768px) {
-          .dashboard {
-            padding: 1rem;
-          }
-
-          .dashboard-header {
-            flex-direction: column;
-            gap: 1rem;
-            align-items: flex-start;
-          }
-
-          .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-      `}</style>
+          {/* Time Capsule */}
+          <div className="time-capsule-card">
+            <div className="card-header">
+              <div className="card-icon blue">
+                <Archive size={20} />
+              </div>
+              <h3 className="card-title">Cápsula do Tempo</h3>
+            </div>
+            <div className="capsule-content">
+              <span className="capsule-text">Histórico de estudo</span>
+            </div>
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Flashcard Modal */}
+      <AnimatePresence>
+        {showFlashcardModal && activeDocument && (
+          <motion.div
+            className="flashcard-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowFlashcardModal(false)}
+          >
+            <motion.div
+              className="flashcard-modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="modal-close-btn"
+                onClick={() => setShowFlashcardModal(false)}
+              >
+                <X size={24} />
+              </button>
+              <FlashcardViewer documentId={activeDocument.id} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Section - Civilization Path */}
+      <section className="civilization-section">
+        <h3 className="section-title">Caminho da Civilização</h3>
+        <CivilizationPath />
+      </section>
+    </div>
+  );
 };
 
-interface StatCardProps {
-    icon: React.ReactNode;
-    title: string;
-    value: string | number;
-    color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ icon, title, value, color }) => (
-    <motion.div
-        className="stat-card glass"
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 300 }}
-    >
-        <div className="stat-icon" style={{ color }}>
-            {icon}
-        </div>
-        <div className="stat-content">
-            <h4>{title}</h4>
-            <p className="stat-value">{value}</p>
-        </div>
-        <style>{`
-      .stat-card {
-        padding: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        cursor: default;
-      }
-
-      .stat-icon {
-        flex-shrink: 0;
-      }
-
-      .stat-content h4 {
-        margin: 0;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: var(--color-text-secondary);
-      }
-
-      .stat-value {
-        margin: 0.25rem 0 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--color-text-primary);
-      }
-    `}</style>
-    </motion.div>
-);
-
-interface DocumentCardProps {
-    document: Document;
-    index: number;
-}
-
-const DocumentCard: React.FC<DocumentCardProps> = ({ document, index }) => (
-    <motion.div
-        className="document-card card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.1 }}
-    >
-        <div className="document-header">
-            <FileText size={32} className="document-icon" />
-            <h3>{document.filename}</h3>
-        </div>
-        <div className="document-meta">
-            <span>{document.pageCount} páginas</span>
-            <span>{document.chunkCount} chunks</span>
-            {document.imageCount > 0 && <span>{document.imageCount} imagens</span>}
-        </div>
-        <div className="document-actions">
-            <Link to={`/chat?doc=${document.id}`} className="btn btn-primary">
-                <Brain size={18} />
-                Fazer Perguntas
-            </Link>
-            <Link to={`/flashcards?doc=${document.id}`} className="btn btn-secondary">
-                <Sparkles size={18} />
-                Gerar Flashcards
-            </Link>
-        </div>
-        <style>{`
-      .document-card {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .document-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .document-icon {
-        color: var(--color-accent-primary);
-        flex-shrink: 0;
-      }
-
-      .document-header h3 {
-        margin: 0;
-        font-size: 1.125rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .document-meta {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.875rem;
-        color: var(--color-text-secondary);
-      }
-
-      .document-actions {
-        display: flex;
-        gap: 0.75rem;
-        margin-top: auto;
-      }
-
-      .document-actions .btn {
-        flex: 1;
-        font-size: 0.875rem;
-        padding: 0.625rem 1rem;
-      }
-    `}</style>
-    </motion.div>
-);
+export default Dashboard;
