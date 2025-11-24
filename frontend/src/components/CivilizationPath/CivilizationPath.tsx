@@ -1,6 +1,7 @@
 import React from 'react';
-import { Lock, Check, Tent, Home, Castle, Building2, Rocket } from 'lucide-react';
-import { useGamification } from '../context/GamificationContext';
+import { Lock, Tent, Home, Castle, Building2, Rocket } from 'lucide-react';
+import { useGamification } from '../../context/GamificationContext';
+import StoneAgeScene from '../Paths/StoneAgeScene2';
 import './CivilizationPath.css';
 
 const ERAS = [
@@ -12,7 +13,7 @@ const ERAS = [
 ];
 
 const CivilizationPath: React.FC = () => {
-    const { bioEnergy } = useGamification(); // Using bioEnergy as XP for now
+    const { bioEnergy } = useGamification();
 
     const getCurrentLevel = () => {
         for (let i = ERAS.length - 1; i >= 0; i--) {
@@ -25,6 +26,8 @@ const CivilizationPath: React.FC = () => {
 
     return (
         <div className="civilization-path-container">
+            <h2 className="text-2xl font-bold mb-6">Caminho da Civilização</h2>
+
             <div className="path-track">
                 {ERAS.map((era, index) => {
                     const isUnlocked = bioEnergy >= era.xpRequired;
@@ -54,6 +57,12 @@ const CivilizationPath: React.FC = () => {
                         </div>
                     );
                 })}
+            </div>
+
+            {/* Cena animada da era atual */}
+            <div className="era-scene-container">
+                {currentLevel === 1 && <StoneAgeScene />}
+                {/* Adicionar outras cenas aqui quando criares */}
             </div>
         </div>
     );

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { UploadZone } from './UploadZone';
-import { FlashcardViewer } from './FlashcardViewer';
-import { StudyTabs } from './StudyTabs';
+import { FlashcardViewer } from './Flashcard/FlashcardViewer';
+import { QuizView } from './Quiz/QuizView';
+import { StudyTabs, TabType } from './StudyTabs';
 import { ChatInterface } from './ChatInterface';
-import CivilizationPath from './CivilizationPath';
+import CivilizationPath from './CivilizationPath/CivilizationPath';
 import { useGamification } from '../context/GamificationContext';
-import { Book, Archive, Hammer, Plus, FileText, Trash2, X } from 'lucide-react';
+import { Book, Archive, Hammer, Plus, FileText, Trash2 } from 'lucide-react';
 import { getDocuments, deleteDocument, type Document } from '../services/api';
 import './Dashboard.css';
 
@@ -15,7 +16,7 @@ const Dashboard: React.FC = () => {
   const [activeDocument, setActiveDocument] = useState<Document | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [viewMode, setViewMode] = useState<TabType>('chat');
   const { currentEra, civilizationXP } = useGamification();
 
   useEffect(() => {
@@ -35,6 +36,7 @@ const Dashboard: React.FC = () => {
 
   const handleUploadSuccess = (doc: any) => {
     setActiveDocument(doc);
+    setViewMode('chat');
     setShowUpload(false);
     loadDocuments();
   };
@@ -111,7 +113,9 @@ const Dashboard: React.FC = () => {
                   </h2>
                 </div>
                 <div className="document-viewer-single">
-                  <ChatInterface documentId={activeDocument.id} />
+                  {viewMode === 'chat' && <ChatInterface documentId={activeDocument.id} />}
+                  {viewMode === 'flashcards' && <FlashcardViewer documentId={activeDocument.id} />}
+                  {viewMode === 'quiz' && <QuizView documentId={activeDocument.id} />}
                 </div>
               </div>
             )}
@@ -156,7 +160,10 @@ const Dashboard: React.FC = () => {
                 documents.map((doc) => (
                   <div
                     key={doc.id}
-                    onClick={() => setActiveDocument(doc)}
+                    onClick={() => {
+                      setActiveDocument(doc);
+                      setViewMode('chat');
+                    }}
                     className={`document-item ${activeDocument?.id === doc.id ? 'active' : ''}`}
                   >
                     <div className="document-content">
@@ -185,11 +192,11 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Study Tabs: Flashcards, Quiz, Resumo */}
+          {/* Study Tabs: Flashcards, Quiz, Chat */}
           {activeDocument && (
             <StudyTabs
-              documentId={activeDocument.id}
-              onOpenFlashcardModal={() => setShowFlashcardModal(true)}
+              activeTab={viewMode}
+              onTabChange={setViewMode}
             />
           )}
 
@@ -208,34 +215,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Flashcard Modal */}
-      <AnimatePresence>
-        {showFlashcardModal && activeDocument && (
-          <motion.div
-            className="flashcard-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowFlashcardModal(false)}
-          >
-            <motion.div
-              className="flashcard-modal-content"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="modal-close-btn"
-                onClick={() => setShowFlashcardModal(false)}
-              >
-                <X size={24} />
-              </button>
-              <FlashcardViewer documentId={activeDocument.id} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Bottom Section - Civilization Path */}
       <section className="civilization-section">

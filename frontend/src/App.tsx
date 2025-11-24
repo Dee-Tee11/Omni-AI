@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
-import MobileNav from './components/MobileNav';
-import Sidebar from './components/Sidebar';
+import MobileNav from './components/MobileNav/MobileNav';
+import Sidebar from './components/SideBar/Sidebar';
 import { GamificationProvider } from './context/GamificationContext';
 import { Menu, X } from 'lucide-react';
 import './index.css';
+
+import { FlashcardViewer } from './components/Flashcard/FlashcardViewer';
+import { QuizView } from './components/Quiz/QuizView';
 
 const App: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,10 +29,10 @@ const App: React.FC = () => {
 
                     {/* Main Content Area */}
                     <main className={`w-full pb-24 md:pb-8 transition-all duration-300 ${sidebarOpen
-                            ? sidebarMini
-                                ? 'md:pl-20'
-                                : 'md:pl-[280px]'
-                            : 'flex items-center justify-center'
+                        ? sidebarMini
+                            ? 'md:pl-20'
+                            : 'md:pl-[280px]'
+                        : 'flex items-center justify-center'
                         }`}>
                         {/* Hamburger Toggle Button */}
                         <button
@@ -44,6 +47,8 @@ const App: React.FC = () => {
                             <Routes>
                                 <Route path="/" element={<Dashboard />} />
                                 <Route path="/library" element={<div className="p-8">Library (Coming Soon)</div>} />
+                                <Route path="/flashcards" element={<FlashcardViewer />} />
+                                <Route path="/quiz" element={<QuizView />} />
                                 <Route path="/stats" element={<div className="p-8">Stats (Coming Soon)</div>} />
                             </Routes>
                         </div>

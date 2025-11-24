@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ChevronRight, Sparkles, Zap } from 'lucide-react';
-import { generateFlashcards, type FlashcardSet } from '../services/api';
-import { useGamification } from '../context/GamificationContext';
+import { generateFlashcards, type FlashcardSet } from '../../services/api';
+import { useGamification } from '../../context/GamificationContext';
 import './FlashcardQuickView.css';
 
 interface FlashcardQuickViewProps {

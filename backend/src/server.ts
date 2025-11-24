@@ -6,6 +6,7 @@ import { pdfService } from './services/pdfService.js';
 import { vectorService } from './services/vectorService.js';
 import { ragService } from './services/ragService.js';
 import { flashcardService } from './services/flashcardService.js';
+import { quizService } from './services/quizService.js';
 
 const app = express();
 const PORT = env.PORT;
@@ -157,6 +158,30 @@ app.post('/api/flashcards/generate', async (req, res) => {
     }
 });
 
+// Generate quiz
+app.post('/api/quiz/generate', async (req, res) => {
+    try {
+        const { documentId, count, difficulty } = req.body;
+
+        if (!documentId) {
+            return res.status(400).json({ error: 'Document ID is required' });
+        }
+
+        console.log(`Generating quiz for document: ${documentId}`);
+
+        const quizSet = await quizService.generateQuiz({
+            documentId,
+            count,
+            difficulty,
+        });
+
+        res.json(quizSet);
+    } catch (error: any) {
+        console.error('Quiz generation error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Update flashcard review
 app.post('/api/flashcards/:id/review', async (req, res) => {
     try {
@@ -225,6 +250,7 @@ API Endpoints:
   - DELETE /api/documents/:id       Delete document
   - POST   /api/query               Ask question (RAG)
   - POST   /api/flashcards/generate Generate flashcards
+  - POST   /api/quiz/generate       Generate quiz
   - GET    /api/stats               Get statistics
       `);
         });

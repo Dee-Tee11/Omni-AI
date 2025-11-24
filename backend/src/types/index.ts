@@ -82,3 +82,25 @@ export interface GenerateFlashcardsRequest {
     count?: number; // Number of flashcards to generate (default: 10)
     includeImages?: boolean; // Whether to include images in flashcards
 }
+
+export interface QuizQuestion {
+    id: string;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation?: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
+}
+
+export interface QuizSet {
+    documentId: string;
+    documentName: string;
+    questions: QuizQuestion[];
+    createdAt: Date;
+}
+
+export interface GenerateQuizRequest {
+    documentId: string;
+    count?: number; // Number of questions to generate (default: 10)
+    difficulty?: 'easy' | 'medium' | 'hard' | 'mixed';
+}

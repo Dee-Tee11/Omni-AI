@@ -1,7 +1,8 @@
 .civilization-path-container {
     width: 100%;
     overflow-x: auto;
-    padding: 2rem 1rem;
+    overflow-y: visible;
+    padding: 2rem 1rem 3rem 1rem;
     background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
     border-radius: 1rem;
     border: 1px solid #e5e7eb;
@@ -15,6 +16,7 @@
     min-width: max-content;
     padding: 0 2rem;
     position: relative;
+    margin-bottom: 3rem;
 }
 
 /* Connecting line */
@@ -106,4 +108,32 @@
     height: 100%;
     background-color: #10b981;
     border-radius: 99px;
+}
+
+/* Container da cena animada */
+.era-scene-container {
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .civilization-path-container {
+        padding: 1.5rem 1rem 2rem 1rem;
+    }
+
+    .path-track {
+        gap: 3rem;
+        margin-bottom: 2rem;
+    }
+
+    .node-circle {
+        width: 56px;
+        height: 56px;
+    }
 }

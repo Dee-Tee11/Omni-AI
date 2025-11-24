@@ -110,6 +110,35 @@ export const reviewFlashcard = async (
     });
 };
 
+export interface QuizQuestion {
+    id: string;
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation?: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
+}
+
+export interface QuizSet {
+    documentId: string;
+    documentName: string;
+    questions: QuizQuestion[];
+    createdAt: string;
+}
+
+export const generateQuiz = async (
+    documentId: string,
+    count?: number,
+    difficulty?: 'easy' | 'medium' | 'hard' | 'mixed'
+): Promise<QuizSet> => {
+    const response = await api.post('/quiz/generate', {
+        documentId,
+        count,
+        difficulty,
+    });
+    return response.data;
+};
+
 export const getStats = async (): Promise<any> => {
     const response = await api.get('/stats');
     return response.data;

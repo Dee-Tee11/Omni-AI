@@ -1,29 +1,23 @@
-import React, { useState } from 'react';
-import { Brain, Target, FileText } from 'lucide-react';
-import { FlashcardQuickView } from './FlashcardQuickView';
-import { QuizView } from './QuizView';
-import { SummaryView } from './SummaryView';
+import React from 'react';
+import { Brain, Target, MessageSquare } from 'lucide-react';
 import './StudyTabs.css';
 
+export type TabType = 'chat' | 'flashcards' | 'quiz';
+
 interface StudyTabsProps {
-    documentId: string;
-    onOpenFlashcardModal?: () => void;
+    activeTab: TabType;
+    onTabChange: (tab: TabType) => void;
 }
 
-type TabType = 'flashcards' | 'quiz' | 'summary';
-
-export const StudyTabs: React.FC<StudyTabsProps> = ({ documentId, onOpenFlashcardModal }) => {
-    const [activeTab, setActiveTab] = useState<TabType>('flashcards');
-
+export const StudyTabs: React.FC<StudyTabsProps> = ({ activeTab, onTabChange }) => {
     const tabs = [
+        { id: 'chat' as TabType, label: 'Chat', icon: MessageSquare },
         { id: 'flashcards' as TabType, label: 'Flashcards', icon: Brain },
         { id: 'quiz' as TabType, label: 'Quiz', icon: Target },
-        { id: 'summary' as TabType, label: 'Resumo', icon: FileText },
     ];
 
     return (
         <div className="study-tabs-container">
-            {/* Tab Headers */}
             <div className="tab-headers">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -31,7 +25,7 @@ export const StudyTabs: React.FC<StudyTabsProps> = ({ documentId, onOpenFlashcar
                         <button
                             key={tab.id}
                             className={`tab-header ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
+                            onClick={() => onTabChange(tab.id)}
                         >
                             <Icon size={18} />
                             <span>{tab.label}</span>
@@ -39,18 +33,7 @@ export const StudyTabs: React.FC<StudyTabsProps> = ({ documentId, onOpenFlashcar
                     );
                 })}
             </div>
-
-            {/* Tab Content */}
-            <div className="tab-content">
-                {activeTab === 'flashcards' && (
-                    <FlashcardQuickView
-                        documentId={documentId}
-                        onOpenFullView={onOpenFlashcardModal}
-                    />
-                )}
-                {activeTab === 'quiz' && <QuizView documentId={documentId} />}
-                {activeTab === 'summary' && <SummaryView documentId={documentId} />}
-            </div>
         </div>
     );
 };
+

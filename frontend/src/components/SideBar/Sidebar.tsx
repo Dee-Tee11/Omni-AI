@@ -10,10 +10,12 @@ import {
     Sparkles,
     Settings,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Brain,
+    Target
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useGamification } from '../context/GamificationContext';
+import { useGamification } from '../../context/GamificationContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -75,6 +77,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                 <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`} title={isMini ? "Minhas aulas" : ""}>
                     <BookOpen />
                     {!isMini && "Minhas aulas"}
+                </Link>
+
+                <Link to="/flashcards" className={`nav-link ${isActive('/flashcards') ? 'active' : ''}`} title={isMini ? "Flashcards" : ""}>
+                    <Brain />
+                    {!isMini && "Flashcards"}
+                </Link>
+
+                <Link to="/quiz" className={`nav-link ${isActive('/quiz') ? 'active' : ''}`} title={isMini ? "Quiz" : ""}>
+                    <Target />
+                    {!isMini && "Quiz"}
                 </Link>
 
                 <Link to="/record" className={`nav-link ${isActive('/record') ? 'active' : ''}`} title={isMini ? "Record lecture" : ""}>
