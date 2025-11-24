@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './components/Dashboard';
-import MobileNav from './components/MobileNav/MobileNav';
-import Sidebar from './components/SideBar/Sidebar';
-import { GamificationProvider } from './context/GamificationContext';
 import { Menu, X } from 'lucide-react';
-import './index.css';
-
+import Dashboard from './components/Dashboard';
 import { FlashcardViewer } from './components/Flashcard/FlashcardViewer';
 import { QuizView } from './components/Quiz/QuizView';
+import MyClasses from './components/MyClasses';
+import { SummariesView } from './components/Summaries/SummariesView';
+import Sidebar from './components/SideBar/Sidebar';
+import { GamificationProvider } from './context/GamificationContext';
+import './index.css';
 
 const App: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,19 +47,21 @@ const App: React.FC = () => {
                             <Routes>
                                 <Route path="/" element={<Dashboard />} />
                                 <Route path="/library" element={<div className="p-8">Library (Coming Soon)</div>} />
+                                <Route path="/classes" element={<MyClasses />} />
                                 <Route path="/flashcards" element={<FlashcardViewer />} />
                                 <Route path="/quiz" element={<QuizView />} />
+                                <Route path="/summaries" element={<SummariesView />} />
                                 <Route path="/stats" element={<div className="p-8">Stats (Coming Soon)</div>} />
                             </Routes>
                         </div>
                     </main>
 
-                    {/* Mobile Navigation */}
-                    <MobileNav onUploadClick={() => { }} />
+                    {/* Mobile Navigation - Commented out as it is missing */}
+                    {/* <MobileNav onUploadClick={() => { }} /> */}
                 </div>
             </Router>
         </GamificationProvider>
     );
-};
+}
 
 export default App;

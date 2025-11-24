@@ -1,0 +1,179 @@
+[
+  {
+    "id": "flashcard_1763983522484_l5l6oe6t0",
+    "classId": "class_1763983324694_0wb39f06z",
+    "documentId": "a208ecaa-a2fc-429e-84c8-e567c23d8d6f",
+    "name": "Flashcards - ldia12_kit_sintese_amor_perdicao.pdf",
+    "flashcards": [
+      {
+        "id": "ded59214-c4db-40da-b589-d48aa53acfa2",
+        "front": "Quem é o autor do livro 'Amor de Perdição'?",
+        "back": "Camilo Castelo Branco"
+      },
+      {
+        "id": "b93ecabd-8012-449d-a51f-fca89f426e73",
+        "front": "Qual é o nome do protagonista do livro 'Amor de Perdição'?",
+        "back": "Simão Botelho"
+      },
+      {
+        "id": "5597605e-d8a9-4757-83a6-9bf73d80dff0",
+        "front": "Por que Simão é condenado à forca?",
+        "back": "Por ter ferido mortalmente Baltasar"
+      },
+      {
+        "id": "230b976f-78aa-4989-97f4-b94d07d36d68",
+        "front": "O que acontece com a pena de Simão após ser condenado à forca?",
+        "back": "A pena é comutada por dez anos de degredo na Índia"
+      },
+      {
+        "id": "f63301d1-6688-434e-8f61-09c4742f9cef",
+        "front": "Quem decide acompanhar Simão no degredo?",
+        "back": "Mariana"
+      },
+      {
+        "id": "c3e9cd98-fbe0-4184-afa3-efe987e1c54f",
+        "front": "Qual é o nome do convento onde Teresa entra após a morte de Baltasar?",
+        "back": "Convento de Monchique, no Porto"
+      },
+      {
+        "id": "fc5a8482-ae7b-4852-b18e-053c9a4394db",
+        "front": "Quem é o pai de Simão e como é descrito?",
+        "back": "Domingos Botelho, é descrito como 'extremamente feio', fraco em 'dotes de espírito' e com 'escassos bens de fortuna'"
+      },
+      {
+        "id": "c927dd44-5163-4b01-bf0f-c116a8a7003c",
+        "front": "Qual é a característica de Simão que assusta as irmãs?",
+        "back": "Seu 'génio sanguinário'"
+      },
+      {
+        "id": "5936e4dc-68e9-46d1-a63e-33aa2b55ba2d",
+        "front": "O que acontece com João da Cruz?",
+        "back": "É vingado em ato de vingança"
+      },
+      {
+        "id": "a1c92d85-653b-4cb1-b801-fac937ad0b51",
+        "front": "Como é descrita Teresa?",
+        "back": "Como uma 'mulher varonil', com 'força de carácter' e 'orgulho' e dotada de 'perspicácia'"
+      }
+    ],
+    "createdAt": "2025-11-24T11:25:22.484Z"
+  },
+  {
+    "id": "flashcard_1763984699516_68vd66cgz",
+    "classId": "class_1763984591127_132bpmyxp",
+    "documentId": "f3a9f899-1e92-4d2c-818e-d493523082d6",
+    "name": "Flashcards - operac_simplific.pdf",
+    "flashcards": [
+      {
+        "id": "fff01afc-a41d-471d-97c9-cc24e8328c07",
+        "front": "Qual é o argumento de i^23 × w^2, onde w é um número complexo de argumento θ, com θ ∈ [π/2, π]?",
+        "back": "θ + π"
+      },
+      {
+        "id": "630d6187-0d95-4be7-9dea-d0fc69b937eb",
+        "front": "Qual é o argumento do número complexo w, sabendo que o ponto M pertence à bissetriz do primeiro quadrante e é o ponto médio do segmento de reta [WZ]?",
+        "back": "11π/60"
+      },
+      {
+        "id": "ed3dc63a-452f-4171-b91c-6d10585e6c80",
+        "front": "Qual é o número complexo igual a z2 × z4, onde z2 e z4 são números complexos representados pelos pontos B e D no plano complexo?",
+        "back": "-25"
+      },
+      {
+        "id": "96e1f431-515c-40cb-a01b-cd9ea420b3fa",
+        "front": "Qual é o número complexo que tem como afixo o transformado do ponto A por uma rotação de centro na origem e de ângulo orientado de amplitude π/3 radianos?",
+        "back": "√3 - i"
+      },
+      {
+        "id": "52bcfee4-fa07-4b3b-a60b-86e1eb51b38c",
+        "front": "Qual é o argumento de 2iz, onde z é um número complexo de argumento π/7?",
+        "back": "9π/14"
+      },
+      {
+        "id": "c6438c91-db92-4982-8961-1f76892a41cc",
+        "front": "Qual é o argumento de w × z, onde w e z são números complexos representados pelos pontos W e Z no plano complexo?",
+        "back": "9π/8"
+      },
+      {
+        "id": "22598758-15ca-4447-8d01-a5f9fd6cef54",
+        "front": "Em qual quadrante do plano complexo pertence o afixo do número complexo z1 + z2, onde z1 = e^(iθ) e z2 = 2e^(i(θ+π))?",
+        "back": "Terceiro"
+      },
+      {
+        "id": "d5101a9c-4453-42bd-af98-db7083be7e94",
+        "front": "Qual é o argumento do número complexo w, sabendo que z × w = i e z = 2e^(i3π/5)?",
+        "back": "-19π/10"
+      },
+      {
+        "id": "0065c487-ab2d-452a-bb0b-c14308e9d039",
+        "front": "Qual é o número complexo que pode ser igual a -2iw, onde w é um número complexo tal que Im(w) = -Re(w) e Re(w) > 1?",
+        "back": "Ponto C"
+      },
+      {
+        "id": "c2d8604f-0b71-467c-bda9-05ff2f0449c3",
+        "front": "Qual é o valor da expressão i^0 + i^1 + i^2 + ... + i^2018?",
+        "back": "-i"
+      }
+    ],
+    "createdAt": "2025-11-24T11:44:59.517Z"
+  },
+  {
+    "id": "flashcard_1763999243103_7lyzk5ww3",
+    "classId": "class_1763999228163_sgcve6lj6",
+    "documentId": "f3a9f899-1e92-4d2c-818e-d493523082d6",
+    "name": "Flashcards - operac_simplific.pdf",
+    "flashcards": [
+      {
+        "id": "e7e741fa-d0bf-4788-9d72-049aa3f84609",
+        "front": "Qual é o argumento de $i^{23} \\times w^2$?",
+        "back": "(C) $3\\theta + \\frac{3\\pi}{2}$"
+      },
+      {
+        "id": "fe4da70e-75a0-46e7-9d53-979767123732",
+        "front": "Qual é o valor de $z_2 \\times z_4$?",
+        "back": "(D) $-25$"
+      },
+      {
+        "id": "78fc3617-7858-49f7-8246-ae56d38d41e6",
+        "front": "Qual é o argumento de $2iz$?",
+        "back": "(A) $\\frac{5\\pi}{14}$"
+      },
+      {
+        "id": "63fb1c99-3e45-482b-9d8d-85f7846ede7d",
+        "front": "Qual é o quadrante em que se encontra o afixo do número complexo $z_1 + z_2$?",
+        "back": "(C) Terceiro"
+      },
+      {
+        "id": "aea994a7-ffd5-48d8-a508-40802a06b59f",
+        "front": "Qual é o argumento do número complexo $w$?",
+        "back": "(A) $\\frac{19\\pi}{10}$"
+      },
+      {
+        "id": "6fcfc309-3f18-475d-ae64-9d5575fa79fa",
+        "front": "Qual é o valor de $|w|$?",
+        "back": "$\\sqrt{13}$"
+      },
+      {
+        "id": "a781af05-255d-40dd-bda2-51387ad8e3aa",
+        "front": "Qual é a imagem geométrica do complexo $-\\frac{1}{2} \\times z$?",
+        "back": "(C) Ponto C"
+      },
+      {
+        "id": "237ede3a-27c4-4371-a64c-06ce1efc344a",
+        "front": "Qual é o argumento do número complexo $-5iz$?",
+        "back": "(D) $-\\frac{13\\pi}{10}$"
+      },
+      {
+        "id": "9cbfd397-d00b-47c0-913c-f1bc31db930e",
+        "front": "Qual é o quadrante em que se encontra a imagem geométrica do complexo $z$?",
+        "back": "(C) Terceiro"
+      },
+      {
+        "id": "f3f408fc-66b1-4745-9900-b0b330686615",
+        "front": "Qual é o valor de $i^0 + i^1 + i^2 + ... + i^{2018}$?",
+        "back": "(A) $i$"
+      }
+    ],
+    "createdAt": "2025-11-24T15:47:23.104Z"
+  }
+]

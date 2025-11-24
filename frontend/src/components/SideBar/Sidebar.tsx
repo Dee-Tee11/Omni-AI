@@ -2,7 +2,6 @@ import React from 'react';
 import {
     Home,
     BookOpen,
-    Mic,
     Trophy,
     Backpack,
     Zap,
@@ -12,7 +11,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Brain,
-    Target
+    Target,
+    FileText
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useGamification } from '../../context/GamificationContext';
@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                     {!isMini && "Página inicial"}
                 </Link>
 
-                <Link to="/library" className={`nav-link ${isActive('/library') ? 'active' : ''}`} title={isMini ? "Minhas aulas" : ""}>
+                <Link to="/classes" className={`nav-link ${isActive('/classes') ? 'active' : ''}`} title={isMini ? "Minhas aulas" : ""}>
                     <BookOpen />
                     {!isMini && "Minhas aulas"}
                 </Link>
@@ -89,9 +89,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                     {!isMini && "Quiz"}
                 </Link>
 
-                <Link to="/record" className={`nav-link ${isActive('/record') ? 'active' : ''}`} title={isMini ? "Record lecture" : ""}>
-                    <Mic />
-                    {!isMini && "Record lecture"}
+                <Link to="/summaries" className={`nav-link ${isActive('/summaries') ? 'active' : ''}`} title={isMini ? "Resumos" : ""}>
+                    <FileText />
+                    {!isMini && "Resumos"}
                 </Link>
 
                 <Link to="/stats" className={`nav-link ${isActive('/stats') ? 'active' : ''}`} title={isMini ? "Placar" : ""}>

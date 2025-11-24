@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, ChevronRight, Check, X, Zap, RotateCcw, Play, FileText } from 'lucide-react';
+import { Target, ChevronRight, Check, X, Zap, RotateCcw, Play, FileText, Plus } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useGamification } from '../../context/GamificationContext';
-import { generateQuiz, QuizQuestion, getDocuments, Document } from '../../services/api';
+import { generateQuiz, QuizQuestion, getDocuments, Document, getQuizSet, getAllClasses, saveQuizSet, type Class } from '../../services/api';
+import { autoSaveQuizToClass } from '../../services/classHelpers';
 import './QuizView.css';
 
 interface QuizViewProps {
@@ -13,6 +14,7 @@ interface QuizViewProps {
 export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }) => {
     const [searchParams] = useSearchParams();
     const urlDocumentId = searchParams.get('doc');
+    const urlSetId = searchParams.get('setId');
 
     // State for Selection Mode
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -29,6 +31,11 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
     const [showXPGain, setShowXPGain] = useState(false);
     const [quizStarted, setQuizStarted] = useState(false);
 
+    // State for Save to Class
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [classes, setClasses] = useState<Class[]>([]);
+    const [selectedClassId, setSelectedClassId] = useState<string>('');
+
     const { addEnergy, currentEra, civilizationXP } = useGamification();
 
     useEffect(() => {
@@ -41,6 +48,42 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
             setSelectedDocumentId(propDocumentId || urlDocumentId);
         }
     }, [propDocumentId, urlDocumentId]);
+
+    // Load saved quiz set if setId is present
+    useEffect(() => {
+        if (urlSetId) {
+            loadSavedQuiz(urlSetId);
+        }
+    }, [urlSetId]);
+
+    const loadSavedQuiz = async (setId: string) => {
+        try {
+            setIsGenerating(true);
+            const savedQuiz = await getQuizSet(setId);
+
+            if (savedQuiz && savedQuiz.questions) {
+                // Map saved questions to QuizQuestion format
+                const mappedQuestions: QuizQuestion[] = savedQuiz.questions.map(q => ({
+                    id: q.id,
+                    question: q.question,
+                    options: q.options,
+                    correctIndex: q.correctAnswer,
+                    explanation: q.explanation
+                }));
+
+                setQuestions(mappedQuestions);
+                setQuizStarted(true);
+                setCurrentIndex(0);
+                setSelectedOption(null);
+                setShowResult(false);
+            }
+        } catch (error) {
+            console.error('Error loading saved quiz:', error);
+            alert('Erro ao carregar o quiz salvo.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const fetchDocuments = async () => {
         try {
@@ -64,6 +107,9 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                 setCurrentIndex(0);
                 setSelectedOption(null);
                 setShowResult(false);
+
+                // Auto-save to class if document belongs to one
+                await autoSaveQuizToClass(selectedDocumentId, data);
             } else {
                 throw new Error('Invalid quiz data format');
             }
@@ -113,6 +159,46 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
         setQuestions([]);
     };
 
+    const loadClasses = async () => {
+        try {
+            const data = await getAllClasses();
+            setClasses(data);
+        } catch (error) {
+            console.error('Error loading classes:', error);
+        }
+    };
+
+    const handleOpenSaveModal = () => {
+        loadClasses();
+        setShowSaveModal(true);
+    };
+
+    const handleConfirmSave = async () => {
+        if (!selectedClassId || !questions.length || !selectedDocumentId) return;
+
+        try {
+            const docName = documents.find(d => d.id === selectedDocumentId)?.filename || 'Documento';
+
+            await saveQuizSet({
+                classId: selectedClassId,
+                documentId: selectedDocumentId,
+                name: `Quiz - ${docName}`,
+                questions: questions.map(q => ({
+                    id: q.id,
+                    question: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctIndex,
+                    explanation: q.explanation,
+                }))
+            });
+            alert('Quiz salvo na aula com sucesso!');
+            setShowSaveModal(false);
+        } catch (error) {
+            console.error('Error saving to class:', error);
+            alert('Erro ao salvar quiz na aula');
+        }
+    };
+
     // Render Quiz Mode (Active Quiz)
     if (quizStarted) {
         const currentQuestion = questions[currentIndex];
@@ -138,13 +224,22 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                         <Target size={20} />
                     </div>
                     <h3 className="card-title">Quiz em Andamento</h3>
-                    <button
-                        className="reload-btn"
-                        onClick={handleRestart}
-                        title="Voltar para seleção"
-                    >
-                        <RotateCcw size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                            className="reload-btn"
+                            onClick={handleOpenSaveModal}
+                            title="Salvar na Aula"
+                        >
+                            <Plus size={16} />
+                        </button>
+                        <button
+                            className="reload-btn"
+                            onClick={handleRestart}
+                            title="Voltar para seleção"
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="quiz-progress">
@@ -229,6 +324,31 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                             )}
                         </button>
                     </motion.div>
+                )}
+
+                {showSaveModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content">
+                            <h2>Salvar Quiz na Aula</h2>
+                            <div className="form-group">
+                                <label>Selecione a Aula</label>
+                                <select
+                                    value={selectedClassId}
+                                    onChange={(e) => setSelectedClassId(e.target.value)}
+                                    className="class-select"
+                                >
+                                    <option value="">-- Selecione uma aula --</option>
+                                    {classes.map(cls => (
+                                        <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="modal-actions">
+                                <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
+                                <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         );

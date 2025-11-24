@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw, Brain, Sparkles, Loader2, FileText, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Brain, Sparkles, Loader2, FileText, Play, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { generateFlashcards, getDocuments, type Flashcard, type FlashcardSet, type Document } from '../../services/api';
+import { generateFlashcards, getDocuments, getAllClasses, saveFlashcardSet, type FlashcardSet, type Document, type Class } from '../../services/api';
+import { autoSaveFlashcardsToClass } from '../../services/classHelpers';
 import { useSearchParams } from 'react-router-dom';
 import { useGamification } from '../../context/GamificationContext';
 
@@ -12,6 +13,7 @@ interface FlashcardViewerProps {
 export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: propDocumentId }) => {
   const [searchParams] = useSearchParams();
   const urlDocumentId = searchParams.get('doc');
+  const urlSetId = searchParams.get('setId');
 
   // State for Selection Mode
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -26,6 +28,11 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
   const [flashcardsStarted, setFlashcardsStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // State for Save to Class
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+
   const { addEnergy, currentEra, civilizationXP } = useGamification();
 
   useEffect(() => {
@@ -37,6 +44,45 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
       setSelectedDocumentId(propDocumentId || urlDocumentId);
     }
   }, [propDocumentId, urlDocumentId]);
+
+  // Load saved flashcard set if setId is present
+  useEffect(() => {
+    if (urlSetId) {
+      loadSavedFlashcards(urlSetId);
+    }
+  }, [urlSetId]);
+
+  const loadSavedFlashcards = async (setId: string) => {
+    try {
+      setIsGenerating(true);
+      const savedSet = await import('../../services/api').then(m => m.getFlashcardSet(setId));
+
+      if (savedSet && savedSet.flashcards) {
+        // Map saved flashcards to FlashcardSet format
+        const mappedSet: FlashcardSet = {
+          documentId: savedSet.documentId,
+          documentName: savedSet.name, // Use set name as document name or fetch doc name
+          createdAt: savedSet.createdAt,
+          flashcards: savedSet.flashcards.map(f => ({
+            id: f.id,
+            question: f.front,
+            answer: f.back,
+            documentId: savedSet.documentId
+          }))
+        };
+
+        setFlashcardSet(mappedSet);
+        setFlashcardsStarted(true);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+      }
+    } catch (err: any) {
+      console.error('Error loading saved flashcards:', err);
+      setError('Erro ao carregar flashcards salvos.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const fetchDocuments = async () => {
     try {
@@ -59,6 +105,9 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
       setFlashcardsStarted(true);
       setCurrentIndex(0);
       setIsFlipped(false);
+
+      // Auto-save to class if document belongs to one
+      await autoSaveFlashcardsToClass(selectedDocumentId, cards);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao gerar flashcards');
     } finally {
@@ -97,6 +146,42 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
     setFlashcardSet(null);
   };
 
+  const loadClasses = async () => {
+    try {
+      const data = await getAllClasses();
+      setClasses(data);
+    } catch (error) {
+      console.error('Error loading classes:', error);
+    }
+  };
+
+  const handleOpenSaveModal = () => {
+    loadClasses();
+    setShowSaveModal(true);
+  };
+
+  const handleConfirmSave = async () => {
+    if (!selectedClassId || !flashcardSet) return;
+
+    try {
+      await saveFlashcardSet({
+        classId: selectedClassId,
+        documentId: flashcardSet.documentId,
+        name: `Flashcards - ${flashcardSet.documentName}`,
+        flashcards: flashcardSet.flashcards.map(f => ({
+          id: f.id,
+          front: f.question,
+          back: f.answer,
+        }))
+      });
+      alert('Flashcards salvos na aula com sucesso!');
+      setShowSaveModal(false);
+    } catch (error) {
+      console.error('Error saving to class:', error);
+      alert('Erro ao salvar flashcards na aula');
+    }
+  };
+
   const currentCard = flashcardSet?.flashcards[currentIndex];
 
   // Render Flashcard Mode (Active Flashcards)
@@ -109,6 +194,10 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
             <p>{flashcardSet.documentName}</p>
           </div>
           <div className="header-actions">
+            <button onClick={handleOpenSaveModal} className="btn btn-primary">
+              <Plus size={20} />
+              Salvar na Aula
+            </button>
             <button onClick={handleRestart} className="btn btn-secondary">
               <RotateCcw size={20} />
               Voltar
@@ -222,6 +311,31 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
             </div>
           </>
         ) : null}
+
+        {showSaveModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Salvar Flashcards na Aula</h2>
+              <div className="form-group">
+                <label>Selecione a Aula</label>
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  className="class-select"
+                >
+                  <option value="">-- Selecione uma aula --</option>
+                  {classes.map(cls => (
+                    <option key={cls.id} value={cls.id}>{cls.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <style>{`
           .flashcard-container {
@@ -530,6 +644,71 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
               padding: 0.75rem;
               font-size: 0.875rem;
             }
+          }
+
+          .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+          }
+
+          .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          }
+
+          .modal-content h2 {
+            margin: 0 0 1.5rem 0;
+            font-size: 1.5rem;
+            color: #1f2937;
+          }
+
+          .form-group {
+            margin-bottom: 1.5rem;
+          }
+
+          .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+          }
+
+          .class-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: white;
+          }
+
+          .class-select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+          }
+
+          .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
           }
         `}</style>
       </div>
