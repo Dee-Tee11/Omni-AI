@@ -2,6 +2,8 @@ import React from 'react';
 import { Lock, Tent, Home, Castle, Building2, Rocket } from 'lucide-react';
 import { useGamification } from '../../context/GamificationContext';
 import StoneAgeScene from '../Paths/StoneAgeScene2';
+import HuntingScene from '../Paths/StoneAgeScene3';
+import ChoppingWoodScene from '../Paths/ChoppingWoodScene';
 import './CivilizationPath.css';
 
 const ERAS = [
@@ -61,7 +63,11 @@ const CivilizationPath: React.FC = () => {
 
             {/* Cena animada da era atual */}
             <div className="era-scene-container">
-                {currentLevel === 1 && <StoneAgeScene />}
+                {currentLevel === 1 && (
+                    bioEnergy >= 375 ? <ChoppingWoodScene /> :
+                        bioEnergy >= 250 ? <HuntingScene /> :
+                            <StoneAgeScene />
+                )}
                 {/* Adicionar outras cenas aqui quando criares */}
             </div>
         </div>

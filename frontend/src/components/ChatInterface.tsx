@@ -28,6 +28,120 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDo
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Process inline markdown (bold, italic, code)
+  const processInlineMarkdown = (text: string) => {
+    // Process bold (**text** or __text__)
+    let processed = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // Process italic (*text* or _text_)
+    processed = processed.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    processed = processed.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Process inline code (`code`)
+    processed = processed.replace(/`(.+?)`/g, '<code>$1</code>');
+
+    return { __html: processed };
+  };
+
+  // Format markdown content into structured JSX
+  const formatMarkdownContent = (content: string) => {
+    const normalized = content.replace(/\r\n/g, '\n');
+    const lines = normalized.split('\n');
+
+    const elements: JSX.Element[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i].trim();
+
+      // Skip empty lines
+      if (!line) {
+        i++;
+        continue;
+      }
+
+      // Check for headings
+      if (line.startsWith('# ')) {
+        elements.push(
+          <h2 key={`h2-${i}`} className="chat-heading" dangerouslySetInnerHTML={processInlineMarkdown(line.substring(2))} />
+        );
+        i++;
+        continue;
+      }
+
+      if (line.startsWith('## ')) {
+        elements.push(
+          <h3 key={`h3-${i}`} className="chat-subheading" dangerouslySetInnerHTML={processInlineMarkdown(line.substring(3))} />
+        );
+        i++;
+        continue;
+      }
+
+      if (line.startsWith('### ')) {
+        elements.push(
+          <h4 key={`h4-${i}`} className="chat-subheading-small" dangerouslySetInnerHTML={processInlineMarkdown(line.substring(4))} />
+        );
+        i++;
+        continue;
+      }
+
+      // Check for bullet list
+      if (line.startsWith('- ')) {
+        const listItems: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith('- ')) {
+          listItems.push(lines[i].trim().substring(2));
+          i++;
+        }
+        elements.push(
+          <ul key={`ul-${i}`} className="chat-list">
+            {listItems.map((item, idx) => (
+              <li key={idx} dangerouslySetInnerHTML={processInlineMarkdown(item)} />
+            ))}
+          </ul>
+        );
+        continue;
+      }
+
+      // Check for numbered list
+      if (line.match(/^\d+[\.\-\)]\s*/)) {
+        const listItems: string[] = [];
+        while (i < lines.length && lines[i].trim().match(/^\d+[\.\-\)]\s*/)) {
+          const text = lines[i].trim().replace(/^\d+[\.\-\)]\s*/, '');
+          listItems.push(text);
+          i++;
+        }
+        elements.push(
+          <ol key={`ol-${i}`} className="chat-list">
+            {listItems.map((item, idx) => (
+              <li key={idx} dangerouslySetInnerHTML={processInlineMarkdown(item)} />
+            ))}
+          </ol>
+        );
+        continue;
+      }
+
+      // Regular paragraph
+      let paragraph = line;
+      i++;
+      while (i < lines.length && lines[i].trim() &&
+        !lines[i].trim().startsWith('#') &&
+        !lines[i].trim().startsWith('- ') &&
+        !lines[i].trim().match(/^\d+[\.\-\)]\s*/)) {
+        paragraph += ' ' + lines[i].trim();
+        i++;
+      }
+
+      if (paragraph) {
+        elements.push(
+          <p key={`p-${i}`} className="chat-paragraph" dangerouslySetInnerHTML={processInlineMarkdown(paragraph)} />
+        );
+      }
+    }
+
+    return elements;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -111,7 +225,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDo
         ) : (
           <AnimatePresence>
             {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+              <MessageBubble key={message.id} message={message} formatMarkdown={formatMarkdownContent} />
             ))}
           </AnimatePresence>
         )}
@@ -274,6 +388,87 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDo
           border: 1px solid var(--glass-border);
         }
 
+        /* Markdown Formatting Styles */
+        .formatted-content {
+          line-height: 1.8;
+          color: #374151;
+        }
+
+        .chat-heading {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 1.5rem 0 1rem 0;
+          padding-bottom: 0.5rem;
+          border-bottom: 2px solid #10b981;
+          line-height: 1.4;
+        }
+
+        .chat-heading:first-child {
+          margin-top: 0;
+        }
+
+        .chat-subheading {
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1f2937;
+          margin: 1.25rem 0 0.75rem 0;
+          line-height: 1.4;
+        }
+
+        .chat-subheading-small {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #374151;
+          margin: 1rem 0 0.5rem 0;
+          line-height: 1.4;
+        }
+
+        .chat-paragraph {
+          font-size: 1rem;
+          line-height: 1.8;
+          color: #4b5563;
+          margin: 0 0 1rem 0;
+        }
+
+        .chat-list {
+          margin: 0.75rem 0 1rem 1.5rem;
+          padding-left: 0.5rem;
+        }
+
+        .chat-list li {
+          font-size: 1rem;
+          line-height: 1.8;
+          color: #4b5563;
+          margin-bottom: 0.5rem;
+          padding-left: 0.25rem;
+        }
+
+        .chat-list li::marker {
+          color: #10b981;
+          font-weight: 700;
+        }
+
+        /* Inline Markdown Styles */
+        .formatted-content strong {
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .formatted-content em {
+          font-style: italic;
+          color: #374151;
+        }
+
+        .formatted-content code {
+          background-color: #f3f4f6;
+          color: #dc2626;
+          padding: 0.15rem 0.35rem;
+          border-radius: 0.25rem;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 0.9em;
+        }
+
         .sources {
           margin-top: 1rem;
           padding-top: 1rem;
@@ -323,6 +518,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDo
             align-items: flex-start;
             gap: 1rem;
           }
+
+          .chat-heading {
+            font-size: 1.25rem;
+          }
+
+          .chat-paragraph {
+            font-size: 0.95rem;
+          }
         }
       `}</style>
     </div>
@@ -331,9 +534,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ documentId: propDo
 
 interface MessageBubbleProps {
   message: Message;
+  formatMarkdown: (content: string) => JSX.Element[];
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => (
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, formatMarkdown }) => (
   <motion.div
     className={`message ${message.role}`}
     initial={{ opacity: 0, y: 10 }}
@@ -344,7 +548,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => (
       {message.role === 'user' ? <User size={24} /> : <Bot size={24} />}
     </div>
     <div className="message-content">
-      <div>{message.content}</div>
+      {message.role === 'assistant' ? (
+        <div className="formatted-content">{formatMarkdown(message.content)}</div>
+      ) : (
+        <div>{message.content}</div>
+      )}
       {message.sources && message.sources.length > 0 && (
         <div className="sources">
           <div className="sources-title">

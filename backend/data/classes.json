@@ -30,5 +30,20 @@
       "flashcard_1763999243103_7lyzk5ww3"
     ],
     "quizSetIds": []
+  },
+  {
+    "id": "class_1764004437767_02m6xjpv4",
+    "name": "Direito",
+    "description": "",
+    "color": "#06b6d4",
+    "createdAt": "2025-11-24T17:13:57.767Z",
+    "updatedAt": "2025-11-24T17:14:07.730Z",
+    "documentIds": [
+      "3b120d78-15a7-4060-9b2e-58d46019cbc9"
+    ],
+    "flashcardSetIds": [
+      "flashcard_1764004447710_og0so7tjo"
+    ],
+    "quizSetIds": []
   }
 ]

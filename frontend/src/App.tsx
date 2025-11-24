@@ -11,7 +11,7 @@ import { GamificationProvider } from './context/GamificationContext';
 import './index.css';
 
 const App: React.FC = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [sidebarMini, setSidebarMini] = useState(false);
 
     return (
@@ -29,10 +29,10 @@ const App: React.FC = () => {
 
                     {/* Main Content Area */}
                     <main className={`w-full pb-24 md:pb-8 transition-all duration-300 ${sidebarOpen
-                        ? sidebarMini
-                            ? 'md:pl-20'
-                            : 'md:pl-[280px]'
-                        : 'flex items-center justify-center'
+                            ? sidebarMini
+                                ? 'md:pl-[100px]'
+                                : 'md:pl-[300px]'
+                            : 'md:pl-0'
                         }`}>
                         {/* Hamburger Toggle Button */}
                         <button
@@ -43,7 +43,7 @@ const App: React.FC = () => {
                             {sidebarOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
                         </button>
 
-                        <div className={`${!sidebarOpen ? 'max-w-7xl mx-auto px-4' : 'w-full'}`}>
+                        <div className="w-full px-4">
                             <Routes>
                                 <Route path="/" element={<Dashboard />} />
                                 <Route path="/library" element={<div className="p-8">Library (Coming Soon)</div>} />

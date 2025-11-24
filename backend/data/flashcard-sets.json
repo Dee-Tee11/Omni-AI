@@ -175,5 +175,64 @@
       }
     ],
     "createdAt": "2025-11-24T15:47:23.104Z"
+  },
+  {
+    "id": "flashcard_1764004447710_og0so7tjo",
+    "classId": "class_1764004437767_02m6xjpv4",
+    "documentId": "3b120d78-15a7-4060-9b2e-58d46019cbc9",
+    "name": "Flashcards - Ditamentos para ata - Ana Rita (1).pdf",
+    "flashcards": [
+      {
+        "id": "aff7ae59-203b-4024-8f98-56f089c35b4d",
+        "front": "O que é inspeção no contexto de um julgamento?",
+        "back": "Inspeção é o ato de examinar um local ou objeto para coletar informações relevantes ao caso, geralmente solicitada por uma das partes."
+      },
+      {
+        "id": "20087fee-3dfb-40c8-9524-571129f32e46",
+        "front": "Quando é necessário solicitar inspeção em um julgamento?",
+        "back": "A inspeção deve ser solicitada quando é necessário coletar informações ou provas que não podem ser obtidas por outros meios, como depoimentos."
+      },
+      {
+        "id": "a4cdedad-5905-48da-8824-0b400814f807",
+        "front": "Qual é o objetivo da acareação?",
+        "back": "O objetivo da acareação é esclarecer contradições entre depoimentos de testemunhas."
+      },
+      {
+        "id": "c466768e-7566-48b3-9547-bfbaa72156df",
+        "front": "Como é solicitada a acareação?",
+        "back": "A acareação é solicitada por uma das partes, geralmente quando há uma contradição entre os depoimentos de duas ou mais testemunhas."
+      },
+      {
+        "id": "1468e66e-e5b0-4355-9e12-76b9e08339f2",
+        "front": "O que é contradita?",
+        "back": "Contradita é o ato de contestar ou refutar um depoimento de testemunha com provas ou depoimentos contraditórios."
+      },
+      {
+        "id": "4a98fe27-5996-457c-8b57-c96cf9e4337e",
+        "front": "Quando é possível contraditar um depoimento?",
+        "back": "É possível contraditar um depoimento durante o depoimento da testemunha ou após o término do depoimento."
+      },
+      {
+        "id": "611ddc1c-fae5-46b3-9c2b-21724718ca4c",
+        "front": "Qual é o propósito de juntar documentos em um julgamento?",
+        "back": "O propósito de juntar documentos é fornecer provas adicionais para apoiar ou contradizer depoimentos ou argumentos."
+      },
+      {
+        "id": "377f377d-9361-4311-926a-452ae610d159",
+        "front": "Como é solicitada a junção de documentos?",
+        "back": "A junção de documentos é solicitada por uma das partes, geralmente durante o julgamento, para fornecer provas adicionais."
+      },
+      {
+        "id": "3425df76-db02-42f0-9ae1-0ec8ff15275f",
+        "front": "O que é um requerimento atempado e oportuno processualmente?",
+        "back": "Um requerimento é considerado atempado e oportuno processualmente quando é feito no momento certo e de acordo com as regras processuais."
+      },
+      {
+        "id": "8ac3e3df-f3c4-4e5b-a5e9-793c60c04e81",
+        "front": "Qual é o papel do juiz em relação aos requerimentos das partes?",
+        "back": "O juiz tem o papel de decidir sobre os requerimentos das partes, deferindo ou indeferindo-os de acordo com as regras processuais e o mérito do caso."
+      }
+    ],
+    "createdAt": "2025-11-24T17:14:07.710Z"
   }
 ]

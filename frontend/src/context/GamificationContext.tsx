@@ -23,7 +23,7 @@ interface GamificationState {
 const GamificationContext = createContext<GamificationState | undefined>(undefined);
 
 export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [bioEnergy, setBioEnergy] = useState(0);
+    const [bioEnergy, setBioEnergy] = useState(380); // TESTE: Começar com 380 XP para ver ChoppingWoodScene
     const [restorationLevel, setRestorationLevel] = useState(0);
     const [currentBiome, setCurrentBiome] = useState('forest');
     const [unlockedElements, setUnlockedElements] = useState<BiomeElement[]>([]);
@@ -38,7 +38,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const saved = localStorage.getItem('omni-gamification');
         if (saved) {
             const parsed = JSON.parse(saved);
-            setBioEnergy(parsed.bioEnergy || 0);
+            // setBioEnergy(parsed.bioEnergy || 0); // COMENTADO PARA TESTE: Usar valor fixo 250
             setRestorationLevel(parsed.restorationLevel || 0);
             setUnlockedElements(parsed.unlockedElements || []);
             setStreak(parsed.streak || 0);
