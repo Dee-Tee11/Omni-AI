@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Brain, Sparkles, Loader2, FileText, Play, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { generateFlashcards, getDocuments, getAllClasses, saveFlashcardSet, type FlashcardSet, type Document, type Class } from '../../services/api';
+import { useAuth } from '@clerk/clerk-react';
+import { createClerkSupabaseClient } from '../../lib/supabase';
+import { supabaseFlashcardService } from '../../services/supabaseFlashcardService';
+import { supabaseClassService } from '../../services/supabaseClassService';
+import { generateFlashcards, getDocuments, type FlashcardSet, type Document, type Class } from '../../services/api';
 import { autoSaveFlashcardsToClass } from '../../services/classHelpers';
 import { useSearchParams } from 'react-router-dom';
 import { useGamification } from '../../context/GamificationContext';
@@ -14,6 +18,11 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
   const [searchParams] = useSearchParams();
   const urlDocumentId = searchParams.get('doc');
   const urlSetId = searchParams.get('setId');
+  const { getToken } = useAuth();
+
+  const getClient = async () => {
+    return await createClerkSupabaseClient(getToken);
+  };
 
   // State for Selection Mode
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -55,7 +64,8 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
   const loadSavedFlashcards = async (setId: string) => {
     try {
       setIsGenerating(true);
-      const savedSet = await import('../../services/api').then(m => m.getFlashcardSet(setId));
+      const client = await getClient();
+      const savedSet = await supabaseFlashcardService.getFlashcardSet(client, setId);
 
       if (savedSet && savedSet.flashcards) {
         // Map saved flashcards to FlashcardSet format
@@ -107,7 +117,8 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
       setIsFlipped(false);
 
       // Auto-save to class if document belongs to one
-      await autoSaveFlashcardsToClass(selectedDocumentId, cards);
+      const client = await getClient();
+      await autoSaveFlashcardsToClass(client, selectedDocumentId, cards);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao gerar flashcards');
     } finally {
@@ -148,7 +159,8 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
   const loadClasses = async () => {
     try {
-      const data = await getAllClasses();
+      const client = await getClient();
+      const data = await supabaseClassService.getAllClasses(client);
       setClasses(data);
     } catch (error) {
       console.error('Error loading classes:', error);
@@ -164,12 +176,12 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
     if (!selectedClassId || !flashcardSet) return;
 
     try {
-      await saveFlashcardSet({
+      const client = await getClient();
+      await supabaseFlashcardService.saveFlashcardSet(client, {
         classId: selectedClassId,
         documentId: flashcardSet.documentId,
         name: `Flashcards - ${flashcardSet.documentName}`,
         flashcards: flashcardSet.flashcards.map(f => ({
-          id: f.id,
           front: f.question,
           back: f.answer,
         }))

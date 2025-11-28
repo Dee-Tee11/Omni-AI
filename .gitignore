@@ -28,3 +28,4 @@ backend/chroma_db/
 *.tgz
 .npm
 .eslintcache
+frontend/.env

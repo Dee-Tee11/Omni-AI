@@ -154,6 +154,7 @@ export const getStats = async (): Promise<any> => {
 };
 
 // ===== CLASS/SUBJECT MANAGEMENT =====
+// Interfaces are kept for compatibility if used elsewhere, but functions are removed in favor of Supabase services.
 
 export interface Class {
     id: string;
@@ -203,85 +204,5 @@ export interface ClassWithContent extends Class {
     flashcardSets: SavedFlashcardSet[];
     quizSets: SavedQuizSet[];
 }
-
-// Class CRUD
-export const createClass = async (data: { name: string; description?: string; color?: string }): Promise<Class> => {
-    const response = await api.post('/classes', data);
-    return response.data;
-};
-
-export const getAllClasses = async (): Promise<Class[]> => {
-    const response = await api.get('/classes');
-    return response.data.classes;
-};
-
-export const getClass = async (id: string): Promise<ClassWithContent> => {
-    const response = await api.get(`/classes/${id}`);
-    return response.data;
-};
-
-export const updateClass = async (id: string, data: { name?: string; description?: string; color?: string }): Promise<Class> => {
-    const response = await api.put(`/classes/${id}`, data);
-    return response.data;
-};
-
-export const deleteClass = async (id: string): Promise<void> => {
-    await api.delete(`/classes/${id}`);
-};
-
-export const addDocumentToClass = async (classId: string, documentId: string): Promise<Class> => {
-    const response = await api.post(`/classes/${classId}/documents`, { documentId });
-    return response.data;
-};
-
-export const removeDocumentFromClass = async (classId: string, documentId: string): Promise<Class> => {
-    const response = await api.delete(`/classes/${classId}/documents/${documentId}`);
-    return response.data;
-};
-
-// Flashcard Sets
-export const saveFlashcardSet = async (data: {
-    classId: string;
-    documentId: string;
-    name: string;
-    flashcards: SavedFlashcardSet['flashcards'];
-}): Promise<SavedFlashcardSet> => {
-    const response = await api.post('/flashcard-sets', data);
-    return response.data;
-};
-
-export const getFlashcardSet = async (id: string): Promise<SavedFlashcardSet> => {
-    const response = await api.get(`/flashcard-sets/${id}`);
-    return response.data;
-};
-
-export const deleteFlashcardSet = async (id: string): Promise<void> => {
-    await api.delete(`/flashcard-sets/${id}`);
-};
-
-// Quiz Sets
-export const saveQuizSet = async (data: {
-    classId: string;
-    documentId: string;
-    name: string;
-    questions: SavedQuizSet['questions'];
-}): Promise<SavedQuizSet> => {
-    const response = await api.post('/quiz-sets', data);
-    return response.data;
-};
-
-export const getQuizSet = async (id: string): Promise<SavedQuizSet> => {
-    const response = await api.get(`/quiz-sets/${id}`);
-    return response.data;
-};
-
-export const updateQuizScore = async (id: string, score: number): Promise<SavedQuizSet> => {
-    const response = await api.post(`/quiz-sets/${id}/score`, { score });
-    return response.data;
-};
-
-export const deleteQuizSet = async (id: string): Promise<void> => {
-    await api.delete(`/quiz-sets/${id}`);
-};
 
 export default api;

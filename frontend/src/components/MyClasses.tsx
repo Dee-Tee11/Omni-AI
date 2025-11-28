@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, FileText, Brain, Trophy, Plus, Trash2, ChevronRight, Sparkles } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
+import { createClerkSupabaseClient } from '../lib/supabase';
+import { supabaseClassService } from '../services/supabaseClassService';
+import { supabaseFlashcardService } from '../services/supabaseFlashcardService';
+import { supabaseQuizService } from '../services/supabaseQuizService';
 import {
-    getAllClasses, getClass, createClass, deleteClass,
-    addDocumentToClass, getDocuments, generateFlashcards, generateQuiz,
-    saveFlashcardSet, saveQuizSet, deleteFlashcardSet, deleteQuizSet,
+    getDocuments, generateFlashcards, generateQuiz,
     type Class, type ClassWithContent, type Document
 } from '../services/api';
 import './MyClasses.css';
 
 const MyClasses: React.FC = () => {
     const navigate = useNavigate();
+    const { getToken } = useAuth();
+
+    // Helper to get authenticated client
+    const getClient = async () => {
+        return await createClerkSupabaseClient(getToken);
+    };
+
     const [classes, setClasses] = useState<Class[]>([]);
     const [selectedClass, setSelectedClass] = useState<ClassWithContent | null>(null);
     const [loading, setLoading] = useState(true);
@@ -32,7 +42,8 @@ const MyClasses: React.FC = () => {
     const loadClasses = async () => {
         try {
             setLoading(true);
-            const data = await getAllClasses();
+            const client = await getClient();
+            const data = await supabaseClassService.getAllClasses(client);
             setClasses(data);
         } catch (error) {
             console.error('Error loading classes:', error);
@@ -52,7 +63,8 @@ const MyClasses: React.FC = () => {
 
     const handleSelectClass = async (classId: string) => {
         try {
-            const classData = await getClass(classId);
+            const client = await getClient();
+            const classData = await supabaseClassService.getClass(client, classId);
             setSelectedClass(classData);
         } catch (error) {
             console.error('Error loading class:', error);
@@ -63,7 +75,8 @@ const MyClasses: React.FC = () => {
         if (!newClassName.trim()) return;
 
         try {
-            await createClass({
+            const client = await getClient();
+            await supabaseClassService.createClass(client, {
                 name: newClassName,
                 description: newClassDescription,
                 color: newClassColor,
@@ -82,7 +95,8 @@ const MyClasses: React.FC = () => {
         if (!confirm('Tem certeza que deseja excluir esta aula?')) return;
 
         try {
-            await deleteClass(classId);
+            const client = await getClient();
+            await supabaseClassService.deleteClass(client, classId);
             if (selectedClass?.id === classId) {
                 setSelectedClass(null);
             }
@@ -96,7 +110,8 @@ const MyClasses: React.FC = () => {
         if (!selectedClass || !selectedDocId) return;
 
         try {
-            await addDocumentToClass(selectedClass.id, selectedDocId);
+            const client = await getClient();
+            await supabaseClassService.addDocumentToClass(client, selectedClass.id, selectedDocId);
             setShowAddDocModal(false);
             setSelectedDocId('');
             handleSelectClass(selectedClass.id);
@@ -116,12 +131,12 @@ const MyClasses: React.FC = () => {
 
             const flashcardSet = await generateFlashcards(documentId, 10);
 
-            const savedSet = await saveFlashcardSet({
+            const client = await getClient();
+            const savedSet = await supabaseFlashcardService.saveFlashcardSet(client, {
                 classId: selectedClass.id,
                 documentId: documentId,
                 name: `Flashcards - ${doc?.filename || 'Documento'}`,
                 flashcards: flashcardSet.flashcards.map(f => ({
-                    id: f.id,
                     front: f.question,
                     back: f.answer,
                 }))
@@ -145,12 +160,12 @@ const MyClasses: React.FC = () => {
 
             const quizSet = await generateQuiz(documentId, 10, 'mixed');
 
-            const savedSet = await saveQuizSet({
+            const client = await getClient();
+            const savedSet = await supabaseQuizService.saveQuizSet(client, {
                 classId: selectedClass.id,
                 documentId: documentId,
                 name: `Quiz - ${doc?.filename || 'Documento'}`,
                 questions: quizSet.questions.map(q => ({
-                    id: q.id,
                     question: q.question,
                     options: q.options,
                     correctAnswer: q.correctIndex,
@@ -171,7 +186,8 @@ const MyClasses: React.FC = () => {
         if (!selectedClass || !confirm('Tem certeza que deseja excluir este conjunto de flashcards?')) return;
 
         try {
-            await deleteFlashcardSet(setId);
+            const client = await getClient();
+            await supabaseFlashcardService.deleteFlashcardSet(client, setId);
             handleSelectClass(selectedClass.id);
         } catch (error) {
             console.error('Error deleting flashcard set:', error);
@@ -183,7 +199,8 @@ const MyClasses: React.FC = () => {
         if (!selectedClass || !confirm('Tem certeza que deseja excluir este quiz?')) return;
 
         try {
-            await deleteQuizSet(setId);
+            const client = await getClient();
+            await supabaseQuizService.deleteQuizSet(client, setId);
             handleSelectClass(selectedClass.id);
         } catch (error) {
             console.error('Error deleting quiz set:', error);

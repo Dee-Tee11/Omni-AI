@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Target, ChevronRight, Check, X, Zap, RotateCcw, Play, FileText, Plus } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useGamification } from '../../context/GamificationContext';
-import { generateQuiz, QuizQuestion, getDocuments, Document, getQuizSet, getAllClasses, saveQuizSet, type Class } from '../../services/api';
+import { useAuth } from '@clerk/clerk-react';
+import { createClerkSupabaseClient } from '../../lib/supabase';
+import { supabaseQuizService } from '../../services/supabaseQuizService';
+import { supabaseClassService } from '../../services/supabaseClassService';
+import { generateQuiz, QuizQuestion, getDocuments, Document, type Class } from '../../services/api';
 import { autoSaveQuizToClass } from '../../services/classHelpers';
 import './QuizView.css';
 
@@ -15,6 +19,11 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
     const [searchParams] = useSearchParams();
     const urlDocumentId = searchParams.get('doc');
     const urlSetId = searchParams.get('setId');
+    const { getToken } = useAuth();
+
+    const getClient = async () => {
+        return await createClerkSupabaseClient(getToken);
+    };
 
     // State for Selection Mode
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -59,7 +68,8 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
     const loadSavedQuiz = async (setId: string) => {
         try {
             setIsGenerating(true);
-            const savedQuiz = await getQuizSet(setId);
+            const client = await getClient();
+            const savedQuiz = await supabaseQuizService.getQuizSet(client, setId);
 
             if (savedQuiz && savedQuiz.questions) {
                 // Map saved questions to QuizQuestion format
@@ -109,7 +119,8 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                 setShowResult(false);
 
                 // Auto-save to class if document belongs to one
-                await autoSaveQuizToClass(selectedDocumentId, data);
+                const client = await getClient();
+                await autoSaveQuizToClass(client, selectedDocumentId, data);
             } else {
                 throw new Error('Invalid quiz data format');
             }
@@ -161,7 +172,8 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
 
     const loadClasses = async () => {
         try {
-            const data = await getAllClasses();
+            const client = await getClient();
+            const data = await supabaseClassService.getAllClasses(client);
             setClasses(data);
         } catch (error) {
             console.error('Error loading classes:', error);
@@ -179,12 +191,12 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
         try {
             const docName = documents.find(d => d.id === selectedDocumentId)?.filename || 'Documento';
 
-            await saveQuizSet({
+            const client = await getClient();
+            await supabaseQuizService.saveQuizSet(client, {
                 classId: selectedClassId,
                 documentId: selectedDocumentId,
                 name: `Quiz - ${docName}`,
                 questions: questions.map(q => ({
-                    id: q.id,
                     question: q.question,
                     options: q.options,
                     correctAnswer: q.correctIndex,

@@ -7,7 +7,8 @@ import { vectorService } from './services/vectorService.js';
 import { ragService } from './services/ragService.js';
 import { flashcardService } from './services/flashcardService.js';
 import { quizService } from './services/quizService.js';
-import { classService } from './services/classService.js';
+
+import { requireAuth } from './middleware/auth.js';
 
 const app = express();
 const PORT = env.PORT;
@@ -37,7 +38,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Upload PDF endpoint
-app.post('/api/upload', upload.single('pdf'), async (req, res) => {
+app.post('/api/upload', requireAuth, upload.single('pdf'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
@@ -65,7 +66,7 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
 });
 
 // Get all documents
-app.get('/api/documents', async (req, res) => {
+app.get('/api/documents', requireAuth, async (req, res) => {
     try {
         const documents = await pdfService.getAllDocuments();
         res.json({ documents });
@@ -76,7 +77,7 @@ app.get('/api/documents', async (req, res) => {
 });
 
 // Get single document
-app.get('/api/documents/:id', async (req, res) => {
+app.get('/api/documents/:id', requireAuth, async (req, res) => {
     try {
         const docData = await pdfService.getDocument(req.params.id);
         if (!docData) {
@@ -90,7 +91,7 @@ app.get('/api/documents/:id', async (req, res) => {
 });
 
 // Delete document
-app.delete('/api/documents/:id', async (req, res) => {
+app.delete('/api/documents/:id', requireAuth, async (req, res) => {
     try {
         const documentId = req.params.id;
 
@@ -112,7 +113,7 @@ app.delete('/api/documents/:id', async (req, res) => {
 });
 
 // RAG Query endpoint
-app.post('/api/query', async (req, res) => {
+app.post('/api/query', requireAuth, async (req, res) => {
     try {
         const { question, documentIds, topK } = req.body;
 
@@ -136,7 +137,7 @@ app.post('/api/query', async (req, res) => {
 });
 
 // Generate flashcards
-app.post('/api/flashcards/generate', async (req, res) => {
+app.post('/api/flashcards/generate', requireAuth, async (req, res) => {
     try {
         const { documentId, count, includeImages } = req.body;
 
@@ -160,7 +161,7 @@ app.post('/api/flashcards/generate', async (req, res) => {
 });
 
 // Generate quiz
-app.post('/api/quiz/generate', async (req, res) => {
+app.post('/api/quiz/generate', requireAuth, async (req, res) => {
     try {
         const { documentId, count, difficulty } = req.body;
 
@@ -184,7 +185,7 @@ app.post('/api/quiz/generate', async (req, res) => {
 });
 
 // Generate summary
-app.post('/api/summaries/generate', async (req, res) => {
+app.post('/api/summaries/generate', requireAuth, async (req, res) => {
     try {
         const { documentId } = req.body;
 
@@ -223,7 +224,7 @@ Seja abrangente e inclua todos os pontos principais do documento.`;
 });
 
 // Update flashcard review
-app.post('/api/flashcards/:id/review', async (req, res) => {
+app.post('/api/flashcards/:id/review', requireAuth, async (req, res) => {
     try {
         const { difficulty } = req.body;
 
@@ -241,7 +242,7 @@ app.post('/api/flashcards/:id/review', async (req, res) => {
 });
 
 // Vector database stats
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', requireAuth, async (req, res) => {
     try {
         const stats = await vectorService.getCollectionStats();
         const documents = await pdfService.getAllDocuments();
@@ -264,211 +265,8 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // ===== CLASS/SUBJECT MANAGEMENT ENDPOINTS =====
-
-// Create a new class
-app.post('/api/classes', async (req, res) => {
-    try {
-        const { name, description, color } = req.body;
-        if (!name) {
-            return res.status(400).json({ error: 'Class name is required' });
-        }
-        const newClass = await classService.createClass({ name, description, color });
-        res.json(newClass);
-    } catch (error: any) {
-        console.error('Create class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get all classes
-app.get('/api/classes', async (req, res) => {
-    try {
-        const classes = await classService.getAllClasses();
-        res.json({ classes });
-    } catch (error: any) {
-        console.error('Get classes error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get single class with all content
-app.get('/api/classes/:id', async (req, res) => {
-    try {
-        const classData = await classService.getClassWithContent(req.params.id);
-        if (!classData) {
-            return res.status(404).json({ error: 'Class not found' });
-        }
-        res.json(classData);
-    } catch (error: any) {
-        console.error('Get class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update class
-app.put('/api/classes/:id', async (req, res) => {
-    try {
-        const { name, description, color } = req.body;
-        const updated = await classService.updateClass(req.params.id, { name, description, color });
-        if (!updated) {
-            return res.status(404).json({ error: 'Class not found' });
-        }
-        res.json(updated);
-    } catch (error: any) {
-        console.error('Update class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete class
-app.delete('/api/classes/:id', async (req, res) => {
-    try {
-        const success = await classService.deleteClass(req.params.id);
-        if (!success) {
-            return res.status(404).json({ error: 'Class not found' });
-        }
-        res.json({ success: true });
-    } catch (error: any) {
-        console.error('Delete class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Add document to class
-app.post('/api/classes/:id/documents', async (req, res) => {
-    try {
-        const { documentId } = req.body;
-        if (!documentId) {
-            return res.status(400).json({ error: 'Document ID is required' });
-        }
-        const updated = await classService.addDocumentToClass(req.params.id, documentId);
-        if (!updated) {
-            return res.status(404).json({ error: 'Class not found' });
-        }
-        res.json(updated);
-    } catch (error: any) {
-        console.error('Add document to class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Remove document from class
-app.delete('/api/classes/:id/documents/:documentId', async (req, res) => {
-    try {
-        const updated = await classService.removeDocumentFromClass(req.params.id, req.params.documentId);
-        if (!updated) {
-            return res.status(404).json({ error: 'Class not found' });
-        }
-        res.json(updated);
-    } catch (error: any) {
-        console.error('Remove document from class error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Save flashcard set
-app.post('/api/flashcard-sets', async (req, res) => {
-    try {
-        const { classId, documentId, name, flashcards } = req.body;
-        if (!classId || !documentId || !name || !flashcards) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        const saved = await classService.saveFlashcardSet({ classId, documentId, name, flashcards });
-        res.json(saved);
-    } catch (error: any) {
-        console.error('Save flashcard set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get flashcard set
-app.get('/api/flashcard-sets/:id', async (req, res) => {
-    try {
-        const set = await classService.getFlashcardSet(req.params.id);
-        if (!set) {
-            return res.status(404).json({ error: 'Flashcard set not found' });
-        }
-        res.json(set);
-    } catch (error: any) {
-        console.error('Get flashcard set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete flashcard set
-app.delete('/api/flashcard-sets/:id', async (req, res) => {
-    try {
-        const success = await classService.deleteFlashcardSet(req.params.id);
-        if (!success) {
-            return res.status(404).json({ error: 'Flashcard set not found' });
-        }
-        res.json({ success: true });
-    } catch (error: any) {
-        console.error('Delete flashcard set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Save quiz set
-app.post('/api/quiz-sets', async (req, res) => {
-    try {
-        const { classId, documentId, name, questions } = req.body;
-        if (!classId || !documentId || !name || !questions) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        const saved = await classService.saveQuizSet({ classId, documentId, name, questions });
-        res.json(saved);
-    } catch (error: any) {
-        console.error('Save quiz set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get quiz set
-app.get('/api/quiz-sets/:id', async (req, res) => {
-    try {
-        const set = await classService.getQuizSet(req.params.id);
-        if (!set) {
-            return res.status(404).json({ error: 'Quiz set not found' });
-        }
-        res.json(set);
-    } catch (error: any) {
-        console.error('Get quiz set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update quiz score
-app.post('/api/quiz-sets/:id/score', async (req, res) => {
-    try {
-        const { score } = req.body;
-        if (typeof score !== 'number') {
-            return res.status(400).json({ error: 'Score is required' });
-        }
-        const updated = await classService.updateQuizScore(req.params.id, score);
-        if (!updated) {
-            return res.status(404).json({ error: 'Quiz set not found' });
-        }
-        res.json(updated);
-    } catch (error: any) {
-        console.error('Update quiz score error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete quiz set
-app.delete('/api/quiz-sets/:id', async (req, res) => {
-    try {
-        const success = await classService.deleteQuizSet(req.params.id);
-        if (!success) {
-            return res.status(404).json({ error: 'Quiz set not found' });
-        }
-        res.json({ success: true });
-    } catch (error: any) {
-        console.error('Delete quiz set error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
+// Removed as we migrated to Supabase direct access from frontend
+// The backend now focuses on RAG and AI generation services
 
 
 // Error handling middleware

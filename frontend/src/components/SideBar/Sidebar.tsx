@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserButton, useUser } from '@clerk/clerk-react';
 import {
     Home,
     BookOpen,
@@ -29,6 +30,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClose, onToggleMini }) => {
     const location = useLocation();
     const { streak } = useGamification();
+    const { user } = useUser();
 
     const isActive = (path: string) => location.pathname === path;
 
@@ -119,9 +121,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
 
             <div className="sidebar-footer">
                 <div className="user-profile">
-                    <div className="avatar">🦁</div>
+                    <div className="avatar">
+                        <UserButton />
+                    </div>
                     <div className="user-info">
-                        <span className="user-name">Explorador</span>
+                        <span className="user-name">{user?.fullName || user?.firstName || 'User'}</span>
                     </div>
                     <Settings size={16} className="ml-auto text-gray-400" />
                 </div>
