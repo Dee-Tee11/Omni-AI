@@ -1,23 +1,39 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import helmet from 'helmet';
 import { env } from './config.js';
 import { pdfService } from './services/pdfService.js';
 import { vectorService } from './services/vectorService.js';
 import { ragService } from './services/ragService.js';
 import { flashcardService } from './services/flashcardService.js';
 import { quizService } from './services/quizService.js';
-
 import { requireAuth } from './middleware/auth.js';
 
+dotenv.config();
+
 const app = express();
+
+// Security Headers with Helmet
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://clerk.clerk.com", "https://*.clerk.accounts.dev"],
+            connectSrc: ["'self'", "https://*.clerk.accounts.dev", "https://*.supabase.co"],
+            imgSrc: ["'self'", "data:", "https://img.clerk.com"],
+            workerSrc: ["'self'", "blob:"],
+        },
+    },
+}));
+
 const PORT = env.PORT;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-
-// Configure multer for file uploads (memory storage)
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {

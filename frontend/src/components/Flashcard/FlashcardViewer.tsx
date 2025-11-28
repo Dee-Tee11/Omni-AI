@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RotateCcw, Brain, Sparkles, Loader2, FileText, Play, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, RotateCcw, Plus, Brain, Sparkles, Loader2, FileText, Play } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import sanitizeHtml from 'sanitize-html';
+import { useGamification } from '../../context/GamificationContext';
 import { useAuth } from '@clerk/clerk-react';
 import { createClerkSupabaseClient } from '../../lib/supabase';
 import { supabaseFlashcardService } from '../../services/supabaseFlashcardService';
 import { supabaseClassService } from '../../services/supabaseClassService';
-import { generateFlashcards, getDocuments, type FlashcardSet, type Document, type Class } from '../../services/api';
+import { generateFlashcards, getDocuments, Document, type Class, type FlashcardSet } from '../../services/api';
 import { autoSaveFlashcardsToClass } from '../../services/classHelpers';
-import { useSearchParams } from 'react-router-dom';
-import { useGamification } from '../../context/GamificationContext';
+import './FlashcardViewer.css';
 
 interface FlashcardViewerProps {
   documentId?: string;
@@ -24,18 +26,15 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
     return await createClerkSupabaseClient(getToken);
   };
 
-  // State for Selection Mode
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(propDocumentId || urlDocumentId);
-  const [flashcardCount, setFlashcardCount] = useState(10);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  // State for Flashcard Mode
-  const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [flashcardsStarted, setFlashcardsStarted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>('');
+  const [flashcardSet, setFlashcardSet] = useState<any>(null);
+  const [flashcardCount, setFlashcardCount] = useState(5);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // State for Save to Class
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -50,7 +49,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
   useEffect(() => {
     if (propDocumentId || urlDocumentId) {
-      setSelectedDocumentId(propDocumentId || urlDocumentId);
+      setSelectedDocumentId(propDocumentId || urlDocumentId || '');
     }
   }, [propDocumentId, urlDocumentId]);
 
@@ -260,16 +259,12 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
                     <div className="flashcard-inner">
                       <div className="flashcard-front">
                         <div className="card-label">Pergunta</div>
-                        <div className="card-content">
-                          {currentCard.question}
-                        </div>
+                        <div className="card-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentCard.question) }} />
                         <div className="flip-hint">Clique para ver a resposta</div>
                       </div>
                       <div className="flashcard-back">
                         <div className="card-label">Resposta</div>
-                        <div className="card-content">
-                          {currentCard.answer}
-                        </div>
+                        <div className="card-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentCard.answer) }} />
                         <div className="flip-hint">Clique para voltar</div>
                       </div>
                     </div>

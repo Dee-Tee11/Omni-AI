@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import sanitizeHtml from 'sanitize-html';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, ChevronRight, Check, X, Zap, RotateCcw, Play, FileText, Plus } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -271,7 +272,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                 </div>
 
                 <div className="quiz-question">
-                    <p className="question-text">{currentQuestion.question}</p>
+                    <p className="question-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentQuestion.question) }} />
                 </div>
 
                 <div className="quiz-options">
@@ -292,7 +293,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                                 whileTap={!showResult ? { scale: 0.98 } : {}}
                             >
                                 <span className="option-letter">{String.fromCharCode(65 + index)}</span>
-                                <span className="option-text">{option}</span>
+                                <span className="option-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(option) }} />
                                 {showCorrect && <Check size={20} className="result-icon" />}
                                 {showWrong && <X size={20} className="result-icon" />}
                             </motion.button>
@@ -321,9 +322,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                             {isCorrect ? '🎉 Correto! +50 XP' : '❌ Incorreto. Tenta novamente!'}
                         </p>
                         {currentQuestion.explanation && (
-                            <p className="explanation-text">
-                                {currentQuestion.explanation}
-                            </p>
+                            <p className="explanation-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentQuestion.explanation) }} />
                         )}
                         <button className="next-btn" onClick={handleNext}>
                             {currentIndex < questions.length - 1 ? (
@@ -338,30 +337,32 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                     </motion.div>
                 )}
 
-                {showSaveModal && (
-                    <div className="modal-overlay">
-                        <div className="modal-content">
-                            <h2>Salvar Quiz na Aula</h2>
-                            <div className="form-group">
-                                <label>Selecione a Aula</label>
-                                <select
-                                    value={selectedClassId}
-                                    onChange={(e) => setSelectedClassId(e.target.value)}
-                                    className="class-select"
-                                >
-                                    <option value="">-- Selecione uma aula --</option>
-                                    {classes.map(cls => (
-                                        <option key={cls.id} value={cls.id}>{cls.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="modal-actions">
-                                <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
-                                <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+                {
+                    showSaveModal && (
+                        <div className="modal-overlay">
+                            <div className="modal-content">
+                                <h2>Salvar Quiz na Aula</h2>
+                                <div className="form-group">
+                                    <label>Selecione a Aula</label>
+                                    <select
+                                        value={selectedClassId}
+                                        onChange={(e) => setSelectedClassId(e.target.value)}
+                                        className="class-select"
+                                    >
+                                        <option value="">-- Selecione uma aula --</option>
+                                        {classes.map(cls => (
+                                            <option key={cls.id} value={cls.id}>{cls.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="modal-actions">
+                                    <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
+                                    <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
             </div>
         );
     }
