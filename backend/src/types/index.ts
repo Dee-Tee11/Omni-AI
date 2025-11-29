@@ -1,5 +1,6 @@
 export interface Document {
     id: string;
+    userId?: string; // Added for multi-tenancy
     filename: string;
     uploadDate: Date;
     pageCount: number;

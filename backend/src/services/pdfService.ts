@@ -1,10 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 import pdfParse from 'pdf-parse';
-import { PDFDocument } from 'pdf-lib';
 import crypto from 'crypto';
 import type { Document, TextChunk, ImageMetadata } from '../types/index.js';
 import { env } from '../config.js';
+import { supabase } from '../lib/supabase.js';
+import { vectorService } from './vectorService.js';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createCanvas } from '@napi-rs/canvas';
 
 const UPLOADS_DIR = env.UPLOADS_PATH;
 const IMAGES_DIR = path.join(UPLOADS_DIR, 'images');
@@ -19,7 +22,7 @@ export class PDFService {
         await fs.mkdir(IMAGES_DIR, { recursive: true });
     }
 
-    async processUpload(file: Express.Multer.File): Promise<Document> {
+    async processUpload(file: Express.Multer.File, userId: string): Promise<Document> {
         const documentId = crypto.randomUUID();
         const buffer = file.buffer;
 
@@ -28,17 +31,34 @@ export class PDFService {
         const textContent = pdfData.text;
         const pageCount = pdfData.numpages;
 
-        // Extract images using pdf-lib
-        const images = await this.extractImages(buffer, documentId);
+        // Convert pages to images
+        const images = await this.convertPagesToImages(buffer, documentId);
 
-        // Create text chunks
-        const chunks = this.createChunks(textContent, documentId);
-
-        // Save PDF file
+        // Save PDF file locally
         const pdfPath = path.join(UPLOADS_DIR, `${documentId}.pdf`);
         await fs.writeFile(pdfPath, buffer);
 
-        // Save metadata
+        // Insert metadata into Supabase 'documents' table
+        const { error: dbError } = await supabase
+            .from('documents')
+            .insert({
+                id: documentId,
+                user_id: userId,
+                filename: file.originalname,
+                file_path: `${documentId}.pdf`,
+            });
+
+        if (dbError) {
+            console.error('Error inserting document into Supabase:', dbError);
+            throw new Error(`Failed to save document metadata: ${dbError.message}`);
+        }
+
+        // Create semantic chunks
+        const chunks = this.createSemanticChunks(textContent, documentId, userId);
+
+        // Save chunks to Supabase
+        await vectorService.addChunks(chunks, userId);
+
         const document: Document = {
             id: documentId,
             filename: file.originalname,
@@ -49,132 +69,121 @@ export class PDFService {
             imageCount: images.length,
         };
 
-        const metadataPath = path.join(UPLOADS_DIR, `${documentId}.json`);
-        await fs.writeFile(metadataPath, JSON.stringify({ document, chunks, images }, null, 2));
-
         return document;
     }
 
-    private async extractImages(pdfBuffer: Buffer, documentId: string): Promise<ImageMetadata[]> {
+    private async convertPagesToImages(pdfBuffer: Buffer, documentId: string): Promise<ImageMetadata[]> {
         const images: ImageMetadata[] = [];
+        const docImagesDir = path.join(IMAGES_DIR, documentId);
+        await fs.mkdir(docImagesDir, { recursive: true });
 
         try {
-            const pdfDoc = await PDFDocument.load(pdfBuffer);
-            const pages = pdfDoc.getPages();
-            const docImagesDir = path.join(IMAGES_DIR, documentId);
-            await fs.mkdir(docImagesDir, { recursive: true });
+            // Convert Buffer to Uint8Array for pdfjs
+            const uint8Array = new Uint8Array(pdfBuffer);
 
-            let imageIndex = 0;
+            // Load the document
+            const loadingTask = pdfjsLib.getDocument({
+                data: uint8Array,
+                standardFontDataUrl: 'node_modules/pdfjs-dist/standard_fonts/',
+            });
 
-            for (let pageNum = 0; pageNum < pages.length; pageNum++) {
-                const page = pages[pageNum];
+            const pdfDocument = await loadingTask.promise;
+            const numPages = pdfDocument.numPages;
 
-                // Get images from page (pdf-lib doesn't directly extract images easily)
-                // For now, we'll use a placeholder approach
-                // In production, you might want to use pdf.js or pdfjs-dist for better image extraction
+            for (let i = 1; i <= numPages; i++) {
+                const page = await pdfDocument.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 }); // 1.5 scale for better quality
 
-                // This is a simplified version - you may need additional libraries
-                // like canvas or sharp for proper image extraction
-                const pageImages = await this.extractPageImages(page, pageNum, documentId, imageIndex);
-                images.push(...pageImages);
-                imageIndex += pageImages.length;
+                // Create canvas
+                const canvas = createCanvas(viewport.width, viewport.height);
+                const context = canvas.getContext('2d');
+
+                // Render page to canvas
+                await page.render({
+                    canvasContext: context as any,
+                    viewport: viewport,
+                    canvas: canvas as any, // Required for legacy build
+                }).promise;
+
+                // Save as PNG
+                const imageBuffer = await canvas.encode('png');
+                const imagePath = path.join(docImagesDir, `page-${i}.png`);
+                await fs.writeFile(imagePath, imageBuffer);
+
+                images.push({
+                    id: `${documentId}-img-${i}`,
+                    documentId,
+                    pageNumber: i,
+                    index: i - 1,
+                    width: viewport.width,
+                    height: viewport.height,
+                    path: imagePath
+                });
             }
         } catch (error) {
-            console.error('Error extracting images:', error);
+            console.error('Error converting PDF to images:', error);
         }
 
         return images;
     }
 
-    private async extractPageImages(
-        page: any,
-        pageNum: number,
-        documentId: string,
-        startIndex: number
-    ): Promise<ImageMetadata[]> {
-        // Placeholder implementation
-        // In production, use pdfjs-dist or similar for proper image extraction
-        // For now, we'll return empty array and implement this later with proper library
-        return [];
-    }
-
-    private createChunks(text: string, documentId: string): TextChunk[] {
+    private createSemanticChunks(text: string, documentId: string, userId: string): TextChunk[] {
         const chunks: TextChunk[] = [];
-        const chunkSize = 800; // characters
-        const overlap = 200; // overlap between chunks
 
-        let startPos = 0;
+        // Split by double newline (paragraphs)
+        const paragraphs = text.split(/\n\s*\n/);
+
+        let currentChunkContent = '';
+        let currentChunkStartIndex = 0;
         let chunkIndex = 0;
 
-        while (startPos < text.length) {
-            const endPos = Math.min(startPos + chunkSize, text.length);
-            const content = text.slice(startPos, endPos).trim();
+        const TARGET_CHUNK_SIZE = 1000; // characters (~250 tokens)
 
-            if (content.length > 0) {
+        for (const paragraph of paragraphs) {
+            const trimmedPara = paragraph.trim();
+            if (!trimmedPara) continue;
+
+            // If adding this paragraph exceeds target size, save current chunk and start new
+            if (currentChunkContent.length + trimmedPara.length > TARGET_CHUNK_SIZE && currentChunkContent.length > 0) {
                 chunks.push({
                     id: `${documentId}-chunk-${chunkIndex}`,
                     documentId,
-                    content,
-                    pageNumber: this.estimatePageNumber(startPos, text.length, 1), // Simplified
+                    content: currentChunkContent.trim(),
+                    pageNumber: 0, // TODO: Implement better page mapping for semantic chunks
                     chunkIndex,
-                    startPosition: startPos,
-                    endPosition: endPos,
+                    startPosition: currentChunkStartIndex,
+                    endPosition: currentChunkStartIndex + currentChunkContent.length,
                 });
+
                 chunkIndex++;
+                currentChunkContent = '';
+                currentChunkStartIndex += currentChunkContent.length; // Approximation
             }
 
-            startPos += chunkSize - overlap;
+            currentChunkContent += trimmedPara + '\n\n';
+        }
+
+        // Add remaining content
+        if (currentChunkContent.trim().length > 0) {
+            chunks.push({
+                id: `${documentId}-chunk-${chunkIndex}`,
+                documentId,
+                content: currentChunkContent.trim(),
+                pageNumber: 0,
+                chunkIndex,
+                startPosition: currentChunkStartIndex,
+                endPosition: currentChunkStartIndex + currentChunkContent.length,
+            });
         }
 
         return chunks;
     }
 
-    private estimatePageNumber(position: number, totalLength: number, totalPages: number): number {
-        return Math.ceil((position / totalLength) * totalPages);
-    }
-
-    async getDocument(documentId: string): Promise<{ document: Document; chunks: TextChunk[] } | null> {
-        try {
-            const metadataPath = path.join(UPLOADS_DIR, `${documentId}.json`);
-            const data = await fs.readFile(metadataPath, 'utf-8');
-            return JSON.parse(data);
-        } catch {
-            return null;
-        }
-    }
-
-    async getAllDocuments(): Promise<Document[]> {
-        try {
-            const files = await fs.readdir(UPLOADS_DIR);
-            const jsonFiles = files.filter(f => f.endsWith('.json'));
-
-            const documents: Document[] = [];
-            for (const file of jsonFiles) {
-                const data = await fs.readFile(path.join(UPLOADS_DIR, file), 'utf-8');
-                const { document } = JSON.parse(data);
-                documents.push(document);
-            }
-
-            return documents.sort((a, b) =>
-                new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
-            );
-        } catch {
-            return [];
-        }
-    }
-
     async deleteDocument(documentId: string): Promise<boolean> {
         try {
-            // Delete PDF file
             await fs.unlink(path.join(UPLOADS_DIR, `${documentId}.pdf`));
-
-            // Delete metadata
-            await fs.unlink(path.join(UPLOADS_DIR, `${documentId}.json`));
-
-            // Delete images directory
             const imagesDir = path.join(IMAGES_DIR, documentId);
             await fs.rm(imagesDir, { recursive: true, force: true });
-
             return true;
         } catch {
             return false;

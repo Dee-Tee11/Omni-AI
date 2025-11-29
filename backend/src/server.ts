@@ -12,6 +12,19 @@ import { ragService } from './services/ragService.js';
 import { flashcardService } from './services/flashcardService.js';
 import { quizService } from './services/quizService.js';
 import { requireAuth } from './middleware/auth.js';
+import { supabase } from './lib/supabase.js';
+
+// Extend Express Request type to include Clerk auth
+declare global {
+    namespace Express {
+        interface Request {
+            auth: {
+                userId: string;
+                sessionId: string;
+            };
+        }
+    }
+}
 
 dotenv.config();
 
@@ -60,16 +73,15 @@ app.post('/api/upload', requireAuth, upload.single('pdf'), async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         console.log(`Processing upload: ${req.file.originalname}`);
 
-        // Process PDF
-        const document = await pdfService.processUpload(req.file);
-
-        // Get chunks and add to vector database
-        const docData = await pdfService.getDocument(document.id);
-        if (docData) {
-            await vectorService.addChunks(docData.chunks);
-        }
+        // Process PDF (now handles vectorService.addChunks internally)
+        const document = await pdfService.processUpload(req.file, userId);
 
         res.json({
             success: true,
@@ -84,8 +96,21 @@ app.post('/api/upload', requireAuth, upload.single('pdf'), async (req, res) => {
 // Get all documents
 app.get('/api/documents', requireAuth, async (req, res) => {
     try {
-        const documents = await pdfService.getAllDocuments();
-        res.json({ documents });
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Query documents from Supabase
+        const { data, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json({ documents: data || [] });
     } catch (error: any) {
         console.error('Get documents error:', error);
         res.status(500).json({ error: error.message });
@@ -95,11 +120,23 @@ app.get('/api/documents', requireAuth, async (req, res) => {
 // Get single document
 app.get('/api/documents/:id', requireAuth, async (req, res) => {
     try {
-        const docData = await pdfService.getDocument(req.params.id);
-        if (!docData) {
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { data, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id', req.params.id)
+            .eq('user_id', userId)
+            .single();
+
+        if (error || !data) {
             return res.status(404).json({ error: 'Document not found' });
         }
-        res.json(docData);
+
+        res.json(data);
     } catch (error: any) {
         console.error('Get document error:', error);
         res.status(500).json({ error: error.message });
@@ -109,17 +146,25 @@ app.get('/api/documents/:id', requireAuth, async (req, res) => {
 // Delete document
 app.delete('/api/documents/:id', requireAuth, async (req, res) => {
     try {
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const documentId = req.params.id;
 
         // Delete from vector database
-        await vectorService.deleteDocumentChunks(documentId);
+        await vectorService.deleteDocumentChunks(documentId, userId);
 
         // Delete document files
         const success = await pdfService.deleteDocument(documentId);
 
-        if (!success) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
+        // Delete from Supabase documents table (cascades to document_chunks)
+        await supabase
+            .from('documents')
+            .delete()
+            .eq('id', documentId)
+            .eq('user_id', userId);
 
         res.json({ success: true });
     } catch (error: any) {
@@ -131,6 +176,11 @@ app.delete('/api/documents/:id', requireAuth, async (req, res) => {
 // RAG Query endpoint
 app.post('/api/query', requireAuth, async (req, res) => {
     try {
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         const { question, documentIds, topK } = req.body;
 
         if (!question || typeof question !== 'string') {
@@ -143,7 +193,7 @@ app.post('/api/query', requireAuth, async (req, res) => {
             question,
             documentIds,
             topK,
-        });
+        }, userId);
 
         res.json(response);
     } catch (error: any) {
@@ -205,6 +255,11 @@ app.post('/api/summaries/generate', requireAuth, async (req, res) => {
     try {
         const { documentId } = req.body;
 
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
         if (!documentId) {
             return res.status(400).json({ error: 'Document ID is required' });
         }
@@ -230,7 +285,7 @@ Seja abrangente e inclua todos os pontos principais do documento.`;
             question: summaryPrompt,
             documentIds: [documentId],
             topK: 20 // Get more chunks for comprehensive summary
-        });
+        }, userId);
 
         res.json({ summary: result.answer });
     } catch (error: any) {
@@ -260,19 +315,27 @@ app.post('/api/flashcards/:id/review', requireAuth, async (req, res) => {
 // Vector database stats
 app.get('/api/stats', requireAuth, async (req, res) => {
     try {
-        const stats = await vectorService.getCollectionStats();
-        const documents = await pdfService.getAllDocuments();
+        const userId = req.auth.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Get documents from Supabase
+        const { data: documents } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('user_id', userId);
+
+        // Get chunk count
+        const { count: chunkCount } = await supabase
+            .from('document_chunks')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
 
         res.json({
-            totalDocuments: documents.length,
-            totalChunks: stats.count,
-            documents: documents.map(d => ({
-                id: d.id,
-                filename: d.filename,
-                pageCount: d.pageCount,
-                chunkCount: d.chunkCount,
-                imageCount: d.imageCount,
-            })),
+            totalDocuments: documents?.length || 0,
+            totalChunks: chunkCount || 0,
+            documents: documents || [],
         });
     } catch (error: any) {
         console.error('Stats error:', error);
@@ -291,30 +354,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
-// Initialize vector service and start server
+// Start server
 async function startServer() {
     try {
-        console.log('Initializing vector service...');
-        await vectorService.initialize();
-
-        // Restore vector store from saved documents
-        console.log('Restoring vector store from saved documents...');
-        const documents = await pdfService.getAllDocuments();
-        let restoredCount = 0;
-
-        for (const doc of documents) {
-            try {
-                const docData = await pdfService.getDocument(doc.id);
-                if (docData && docData.chunks) {
-                    console.log(`Restoring document: ${doc.filename} (${docData.chunks.length} chunks)`);
-                    await vectorService.addChunks(docData.chunks);
-                    restoredCount++;
-                }
-            } catch (err) {
-                console.error(`Failed to restore document ${doc.id}:`, err);
-            }
-        }
-        console.log(`✓ Restored ${restoredCount} documents to vector store`);
+        console.log('Starting Omni-AI Backend...');
+        console.log('✓ Supabase connection configured');
+        console.log('✓ Vector service ready (using Supabase pgvector)');
 
         app.listen(PORT, () => {
             console.log(`
@@ -322,6 +367,7 @@ async function startServer() {
 ║   Omni-AI Backend Server Running      ║
 ║   Port: ${PORT}                           ║
 ║   Environment: ${env.NODE_ENV}              ║
+║   Vector DB: Supabase (pgvector)       ║
 ╚════════════════════════════════════════╝
 
 API Endpoints:

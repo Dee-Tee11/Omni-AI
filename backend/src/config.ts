@@ -9,16 +9,39 @@ const __dirname = dirname(__filename);
 // Load .env from backend root directory
 config({ path: join(__dirname, '..', '.env') });
 
-// Validate required environment variables
-if (!process.env.GROQ_API_KEY) {
-    console.error('ERROR: GROQ_API_KEY is not set in .env file');
-    process.exit(1);
-}
-
 export const env = {
-    PORT: process.env.PORT || '3000',
-    GROQ_API_KEY: process.env.GROQ_API_KEY!,
-    CHROMA_PATH: process.env.CHROMA_PATH || './chroma_db',
-    UPLOADS_PATH: process.env.UPLOADS_PATH || './uploads',
+    PORT: process.env.PORT || 3000,
     NODE_ENV: process.env.NODE_ENV || 'development',
+
+    // Auth
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
+
+    // AI Services
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
+    COHERE_API_KEY: process.env.COHERE_API_KEY,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+
+    // Database
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
+    // Paths
+    UPLOADS_PATH: join(process.cwd(), 'uploads'),
 };
+
+// Validate required environment variables
+const requiredEnvVars = [
+    'CLERK_SECRET_KEY',
+    'CLERK_PUBLISHABLE_KEY',
+    'COHERE_API_KEY',
+    'GEMINI_API_KEY',
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY'
+];
+
+for (const envVar of requiredEnvVars) {
+    if (!env[envVar as keyof typeof env]) {
+        console.warn(`WARNING: Missing environment variable ${envVar}`);
+    }
+}
