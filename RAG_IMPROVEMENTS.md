@@ -1,218 +1,354 @@
 # 🎯 Guia de Melhorias do Sistema RAG (ChatInterface)
 
-## ✅ Melhorias Implementadas
+## 🏗️ Stack Tecnológica Atual
 
-### 1. **Aumento do Contexto Recuperado**
-- **Antes**: `topK = 5` chunks
-- **Agora**: `topK = 8` chunks
-- **Benefício**: Mais informação contextual para respostas mais completas
-
-### 2. **Reranking de Chunks**
+- **LLM**: Google Gemini 2.5 Pro
+- **Vector Database**: Supabase pgvector
+- **Embeddings**: Cohere `embed-multilingual-v3.0`
+- **Backend**: Node.js + Express + TypeScript
+**Implementação atual**:
 ```typescript
-const rerankedChunks = relevantChunks
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, Math.min(topK, relevantChunks.length));
+// vectorService.ts
+const { data: matchDocuments, error } = await supabase.rpc('match_document_chunks', {
+    query_embedding: queryEmbedding,
+    match_threshold: 0.3,  // Base threshold
+    match_count: topK,
+    filter_user_id: userId
+});
+
+// Filter by document_id if specified
+if (documentIds && documentIds.length > 0) {
+    results = results.filter((doc: any) =>
+        documentIds.includes(doc.document_id)
+    );
+}
 ```
-- **Benefício**: Garante que os chunks mais relevantes sejam priorizados
 
-### 3. **Contexto Enriquecido**
-- Adicionado separadores visuais
-- Incluído % de relevância de cada fonte
-- Melhor formatação para o modelo LLM entender
-
-### 4. **Prompt do Sistema Melhorado**
-**Melhorias principais:**
-- ✅ Instruções mais claras e estruturadas
-- ✅ Exemplos de boas respostas
-- ✅ Diretrizes de formatação markdown
-- ✅ Regras explícitas sobre citação de fontes
-- ✅ Lista de comportamentos a evitar
-
-### 5. **Parâmetros da API Otimizados**
-- **Temperature**: `0.3` → `0.2` (respostas mais factuais e consistentes)
-- **Max Tokens**: `1500` → `2000` (respostas mais completas)
-- **Top P**: Adicionado `0.9` (nucleus sampling para melhor qualidade)
+**Próximo nível (opcional)**:
+- Implementar threshold dinâmico baseado no best score
+- Adicionar percentile-based filtering
 
 ---
 
-## 📊 Resultados Esperados
+### **2️⃣ ALTA PRIORIDADE: Chunk Overlap**
 
-### Antes
-- Respostas mais curtas e genéricas
-- Pouca citação de fontes
-- Formatação básica
+**Problema**: Contexto importante é "cortado" nas bordas dos chunks.
 
-### Depois
-- ✅ Respostas mais detalhadas e estruturadas
-- ✅ Citação consistente de fontes
-- ✅ Formatação markdown rica (headings, listas, negrito)
-- ✅ Maior precisão factual (temperature mais baixa)
-- ✅ Melhor contexto (mais chunks relevantes)
+**Solução**:
+```typescript
+// pdfService.ts - createPageChunks
+const TARGET_CHUNK_SIZE = 800; // palavras
+const OVERLAP = 150; // ~20% overlap
+
+for (let i = 0; i < words.length; i += (TARGET_CHUNK_SIZE - OVERLAP)) {
+    const chunkWords = words.slice(i, i + TARGET_CHUNK_SIZE);
+    // ... criar chunk
+}
+```
+
+**Benefício**:
+- ✅ Melhor continuidade contextual
+- ✅ Menos informação perdida entre chunks
+- ✅ Respostas mais completas
 
 ---
 
-## 🚀 Melhorias Adicionais Sugeridas
+### **3️⃣ MÉDIA PRIORIDADE: Reranking com Cohere**
 
-### 1. **Query Expansion** (Expansão de Pergunta)
-Expandir a pergunta do usuário para capturar mais contexto relevante.
+Usar Cohere Rerank API para melhorar ordem dos chunks:
+
+```typescript
+import { CohereClient } from 'cohere-ai';
+
+async rerankChunks(query: string, chunks: Chunk[]): Promise<Chunk[]> {
+    const reranked = await cohere.rerank({
+        model: 'rerank-multilingual-v3.0',
+        query: query,
+        documents: chunks.map(c => c.content),
+        top_n: 5
+    });
+    
+    return reranked.results.map(r => chunks[r.index]);
+}
+```
+
+**Benefício**:
+- ✅ Ordem mais relevante dos chunks
+- ✅ Melhor contexto para o LLM
+- ✅ Respostas mais precisas
+
+---
+
+### **4️⃣ MÉDIA PRIORIDADE: Query Expansion**
+
+Gerar variações da pergunta para melhor retrieval:
 
 ```typescript
 async expandQuery(question: string): Promise<string[]> {
-    // Gera variações da pergunta para melhor recuperação
-    const completion = await groq.chat.completions.create({
-        model: MODEL,
-        messages: [{
-            role: 'system',
-            content: 'Gere 2-3 reformulações da pergunta mantendo o significado.'
-        }, {
-            role: 'user',
-            content: question
-        }],
+    const result = await geminiService.generateContent({
+        prompt: `Gere 2 reformulações desta pergunta mantendo o significado:
+        
+        Pergunta: ${question}
+        
+        Reformulações (uma por linha):`,
         temperature: 0.7,
-        max_tokens: 200
+        maxTokens: 150
     });
-    // Parse e retorna variações
+    
+    const variations = result.split('\n').filter(v => v.trim());
+    return [question, ...variations];
 }
 ```
 
-### 2. **Hybrid Search** (Busca Híbrida)
-Combinar busca semântica (embeddings) com busca léxica (palavras-chave BM25).
+**Benefício**:
+- ✅ Captura mais chunks relevantes
+- ✅ Melhor para perguntas complexas
+- ✅ Mais robusto a formulações diferentes
 
-**Benefício**: Captura tanto conceitos similares quanto matches exatos de termos.
+---
 
-### 3. **Chunk Overlap** (Sobreposição de Chunks)
-Ao processar PDFs, criar chunks com sobreposição de ~50 palavras.
+### **5️⃣ BAIXA PRIORIDADE: Hybrid Search**
 
+Combinar busca vetorial (semântica) com busca léxica (BM25):
+
+**Benefício**:
+- ✅ Captura matches exatos de termos técnicos
+- ✅ Melhor para nomes próprios e acrônimos
+- ✅ Mais completo que busca vetorial sozinha
+
+**Nota**: Requer integração com PostgreSQL full-text search ou Elasticsearch.
+
+---
+
+## 📊 Configurações Atuais vs. Recomendadas
+
+### Atual
 ```typescript
-// No pdfService.ts
-const chunkSize = 800; // palavras
-const overlap = 100;   // palavras de sobreposição
+// vectorService.ts
+match_threshold: 0.3
+match_count: topK (5)
+
+// ragService.ts
+topK: 5 chunks
+
+// geminiService.ts
+model: 'gemini-2.5-pro'
+temperature: padrão (~0.7)
 ```
 
-**Benefício**: Evita perder contexto importante que fica "cortado" nas bordas dos chunks.
-
-### 4. **Metadata Filtering** (Filtros de Metadados)
-Adicionar filtros por:
-- Data do documento
-- Tipo de conteúdo
-- Tópico/categoria
-- Nível de dificuldade
-
-### 5. **Conversation Memory** (Memória de Conversação)
-Manter histórico da conversa para perguntas de follow-up:
-
+### Recomendado para Estudo
 ```typescript
-interface ConversationContext {
-    messages: Message[];
-    lastQuery: string;
-    relevantChunks: Chunk[];
-}
+// vectorService.ts
+match_threshold: 0.2 (inicial, depois adaptativo)
+match_count: topK * 3 (15 candidatos)
+
+// ragService.ts
+topK: 8 chunks (mais contexto)
+
+// geminiService.ts
+model: 'gemini-2.5-pro'
+temperature: 0.3 (mais factual)
+maxTokens: 2000 (respostas completas)
+topP: 0.9
 ```
 
-### 6. **Question Classification** (Classificação de Perguntas)
-Identificar o tipo de pergunta e ajustar a estratégia:
-- **Factual**: "O que é X?"
-- **Comparação**: "Qual a diferença entre X e Y?"
-- **Explicação**: "Como funciona X?"
-- **Análise**: "Por que X acontece?"
+---
 
-### 7. **Answer Validation** (Validação de Resposta)
-Verificar se a resposta gerada está realmente baseada no contexto:
+## 🔧 Melhorias de Chunking
 
+### Tamanho Atual
 ```typescript
-async validateAnswer(question: string, answer: string, context: string): Promise<boolean> {
-    // Usa LLM para verificar se a resposta é fiel ao contexto
-}
+TARGET_CHUNK_SIZE = 1000 caracteres (aproximado)
+OVERLAP = 0
 ```
 
-### 8. **Dynamic topK** (topK Dinâmico)
-Ajustar quantidade de chunks baseado na complexidade da pergunta:
-- Pergunta simples: 3-5 chunks
-- Pergunta complexa: 8-12 chunks
+### Recomendado
+```typescript
+TARGET_CHUNK_SIZE = 800 palavras (~4000 caracteres)
+OVERLAP = 150 palavras (~750 caracteres, 20%)
+```
 
-### 9. **Source Quality Scoring** (Pontuação de Qualidade)
-Dar peso maior a chunks que:
-- Têm maior densidade de informação
-- Contêm definições ou conceitos-chave
-- Estão em seções importantes do documento (introdução, conclusão)
+**Justificativa**:
+- Chunks baseados em palavras são mais consistentes
+- Overlap garante continuidade contextual
+- 800 palavras é o sweet spot para embeddings
 
-### 10. **User Feedback Loop** (Ciclo de Feedback)
-Permitir usuário avaliar respostas (👍 / 👎) para melhorar ao longo do tempo.
+---
+
+## 🎓 Prompt Engineering
+
+### Prompt Atual (Básico)
+```
+Você é um assistente de estudos.
+Responda com base no contexto.
+Se não souber, diga que não sabe.
+Cite as fontes.
+```
+
+### Prompt Melhorado (Sugerido)
+```typescript
+const systemPrompt = `Você é um assistente de estudos especializado e preciso.
+
+INSTRUÇÕES:
+1. Use APENAS informações do contexto fornecido
+2. Se a resposta não estiver no contexto, diga explicitamente
+3. Cite SEMPRE as fontes (Página X, Y, Z)
+4. Estruture respostas com markdown:
+   - Use ## para títulos de seção
+   - Use **negrito** para conceitos-chave
+   - Use listas numeradas para sequências
+   - Use listas com bullets para itens relacionados
+
+FORMATAÇÃO DE FONTES:
+- No final da resposta, inclua: "📚 Fontes: Páginas X, Y, Z"
+
+EVITE:
+❌ Inventar informação não presente no contexto
+❌ Usar conhecimento geral não relacionado ao documento
+❌ Respostas genéricas sem evidência
+
+EXEMPLO DE BOA RESPOSTA:
+## Conceito Principal
+**Fotossíntese** é o processo pelo qual plantas convertem luz em energia...
+
+### Etapas
+1. Absorção de luz
+2. Conversão química
+3. Produção de glicose
+
+📚 Fontes: Páginas 12, 14, 15`;
+```
 
 ---
 
 ## 📈 Métricas para Monitorar
 
-1. **Similarity Score Médio** das fontes retornadas
-2. **Tempo de resposta** (latência)
-3. **Satisfação do usuário** (se implementar feedback)
-4. **Taxa de "não encontrei informação"**
-5. **Comprimento médio das respostas**
+1. **Average Similarity Score**: Média dos scores de similaridade dos chunks retornados
+2. **Response Time**: Tempo total da query (embedding + retrieval + geração)
+3. **Chunks Used**: Quantos chunks foram efetivamente usados
+4. **"No Context" Rate**: % de vezes que retorna "não encontrei informação"
+5. **Response Length**: Tamanho médio das respostas
 
----
-
-## 🔧 Configurações Recomendadas por Caso de Uso
-
-### Para Respostas Curtas e Diretas
+### Dashboard Sugerido
 ```typescript
-temperature: 0.1
-max_tokens: 500
-topK: 3-5
-```
-
-### Para Explicações Detalhadas
-```typescript
-temperature: 0.2-0.3
-max_tokens: 2000-3000
-topK: 8-12
-```
-
-### Para Brainstorming/Criatividade
-```typescript
-temperature: 0.7-0.9
-max_tokens: 1500
-topK: 5-7
+// Adicionar logging em ragService.ts
+console.log({
+    query: question,
+    chunks_retrieved: relevantChunks.length,
+    avg_similarity: avgSimilarity,
+    response_time: responseTime,
+    model: 'gemini-2.5-pro'
+});
 ```
 
 ---
 
-## 🎓 Dicas de Uso para o Aluno
+## 🔄 Roadmap de Implementação
 
-### ✅ Boas Perguntas
-- "Explique o conceito de fotossíntese mencionado no documento"
-- "Quais são os principais pontos sobre a Segunda Guerra Mundial?"
-- "Resuma a teoria da relatividade presente no texto"
+### Fase 1: Quick Wins ✅ CONCLUÍDA
+- [x] ✅ Fix document_id bug
+- [x] ✅ Ajustar threshold para 0.3
+- [x] ✅ Atualizar para gemini-2.5-pro
+- [x] ✅ Implementar threshold adaptativo (base)
+- [x] ✅ Implementar semantic chunking
+- [x] ✅ Melhorar prompt do sistema
+- [x] ✅ Adicionar parâmetros de temperatura/topP
+- [x] ✅ Organizar testes em estrutura de diretórios
 
-### ❌ Perguntas que Podem Ter Resultados Limitados
-- "O que você acha sobre X?" (opinião)
-- "Compare X com Y" (se Y não está nos documentos)
-- Perguntas muito genéricas sem contexto
+### Fase 2: Qualidade Base (Próximo)
+- [ ] Testar qualidade end-to-end das respostas
+- [ ] Implementar chunk overlap (se necessário)
+- [ ] Fine-tune threshold dinâmico
+- [ ] Adicionar métricas de qualidade
 
----
+### Fase 3: Features Avançadas (1-2 semanas)
+- [ ] Query expansion
+- [ ] Cohere reranking
+- [ ] Hybrid search (se necessário)
+- [ ] Conversation memory
 
-## 📝 Notas Técnicas
-
-### Vector Database
-- **ChromaDB** é usado para armazenar embeddings
-- **Modelo de Embedding**: deve ser consistente
-- **Dimensionalidade**: depende do modelo usado
-
-### LLM (Groq)
-- **Modelo atual**: `llama-3.3-70b-versatile`
-- **Contexto máximo**: ~70k tokens
-- **Custo**: verificar limites de API
-
-### Processamento de PDF
-- **Chunk size ideal**: 500-1000 palavras
-- **Overlap recomendado**: 10-20% do chunk size
-- **Metadados importantes**: página, seção, data
+### Fase 4: Otimização (ongoing)
+- [ ] A/B testing de configurações
+- [ ] Métricas e dashboards
+- [ ] User feedback loop
 
 ---
 
-## 🔄 Próximos Passos
+## 💡 Dicas de Uso para Estudantes
 
-1. ✅ **Implementado**: Melhorias no prompt e parâmetros
-2. 🔄 **Recomendado**: Implementar chunk overlap
-3. 🔄 **Futuro**: Hybrid search (semântica + léxica)
-4. 🔄 **Futuro**: Conversation memory
-5. 🔄 **Futuro**: User feedback loop
+### ✅ Perguntas Efetivas
+- "Explique [conceito] mencionado no documento"
+- "Quais são os pontos principais sobre [tema]?"
+- "Resuma a seção sobre [tópico]"
+- "Como funciona [processo] segundo o documento?"
+
+### ❌ Perguntas com Limitações
+- "O que você acha sobre X?" (requer opinião)
+- "Compare X com Y" (se Y não está nos docs)
+- Perguntas genéricas sem contexto específico
+- Perguntas sobre conteúdo não presente nos documentos
+
+---
+
+## 🐛 Debugging
+
+### Se as respostas estão ruins:
+
+1. **Verificar chunks retornados**:
+```typescript
+console.log('Chunks:', relevantChunks.map(c => ({
+    page: c.pageNumber,
+    similarity: c.similarity,
+    preview: c.content.slice(0, 100)
+})));
+```
+
+2. **Verificar threshold**:
+- Muito alto (>0.5): poucos chunks
+- Muito baixo (<0.2): muitos chunks irrelevantes
+
+3. **Verificar embedding**:
+- Usar Cohere `embed-multilingual-v3.0` para português
+- Validar que o mesmo modelo é usado para indexar e buscar
+
+4. **Verificar prompt**:
+- LLM recebendo contexto suficiente?
+- Instruções claras o bastante?
+
+---
+
+## 📚 Recursos Úteis
+
+- [Cohere Rerank Docs](https://docs.cohere.com/docs/reranking)
+- [Supabase pgvector Guide](https://supabase.com/docs/guides/ai/vector-columns)
+- [Gemini API Docs](https://ai.google.dev/docs)
+- [RAG Best Practices](https://www.pinecone.io/learn/rag-best-practices/)
+
+---
+
+---
+
+## 🆕 Últimas Implementações (30/11/2025)
+
+### Semantic Chunking
+- **Arquivo**: `pdfService.ts`
+- **Método**: Sentence-level embeddings com cosine similarity
+- **Teste**: `src/tests/semantic/test-chunking-logic.ts` ✅ Passing
+- **Threshold**: Dual (relative drop 15% OR absolute < 0.65)
+
+### Enhanced Prompting
+- **Arquivo**: `geminiService.ts`
+- **Features**: Markdown formatting, source citation, factual responses
+- **Params**: temp=0.3, topP=0.9, topK=40
+
+### Test Infrastructure
+- **Estrutura**: `tests/{semantic,integration,debug,utils}/`
+- **Docs**: Comprehensive README.md com instruções
+
+### Clerk Integration
+- **Status**: ✅ JWT template configurado
+- **Feature**: Salvar quizzes/flashcards funcionando
+
+---
+
+**Última atualização**: 30/11/2025 - Semantic Chunking & Enhanced Prompting implementados

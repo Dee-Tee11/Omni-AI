@@ -5,6 +5,7 @@ import type { Document, TextChunk, ImageMetadata } from '../types/index.js';
 import { env } from '../config.js';
 import { supabase } from '../lib/supabase.js';
 import { vectorService } from './vectorService.js';
+import { cohereService } from './cohereService.js';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 
@@ -72,8 +73,8 @@ export class PDFService {
             const pageText = textContent.items.map((item: any) => item.str).join(' ');
             fullText += pageText + '\n\n';
 
-            // Create chunks for this page
-            const pageChunks = this.createPageChunks(pageText, documentId, i, chunks.length);
+            // Create chunks for this page (semantic chunking)
+            const pageChunks = await this.createPageChunks(pageText, documentId, i, chunks.length);
             chunks.push(...pageChunks);
 
             // 2. Render Image
@@ -118,36 +119,168 @@ export class PDFService {
         return document;
     }
 
-    // Helper to create chunks specifically for a page
-    private createPageChunks(text: string, documentId: string, pageNumber: number, startIndex: number): TextChunk[] {
+    // Semantic chunking using sentence similarity
+    private async createPageChunks(text: string, documentId: string, pageNumber: number, startIndex: number): Promise<TextChunk[]> {
         const chunks: TextChunk[] = [];
-        const paragraphs = text.split(/\n\s*\n/); // Split by paragraphs or double newlines
 
+        // Split by sentences
+        const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+        // If very short, return as single chunk
+        if (sentences.length < 3 || text.length < 200) {
+            return [{
+                id: `${documentId}-chunk-${startIndex}`,
+                documentId,
+                content: text.trim(),
+                pageNumber,
+                chunkIndex: startIndex,
+                startPosition: 0,
+                endPosition: text.length,
+            }];
+        }
+
+        try {
+            // Generate embeddings for semantic analysis
+            const sentenceTexts = sentences.map(s => s.trim());
+            const embeddings = await cohereService.embed(sentenceTexts);
+
+            // Calculate cosine similarity between consecutive sentences
+            const similarities: number[] = [];
+            for (let i = 0; i < embeddings.length - 1; i++) {
+                similarities.push(this.cosineSimilarity(embeddings[i], embeddings[i + 1]));
+            }
+
+            // Find breakpoints where similarity drops (topic change)
+            const avgSim = similarities.reduce((a, b) => a + b, 0) / similarities.length;
+
+            const breakpoints: number[] = [0];
+            for (let i = 0; i < similarities.length; i++) {
+                // Break if similarity drops significantly below average (15% drop)
+                // OR if it drops below an absolute floor (0.65) indicating weak relation
+                const isRelativeDrop = similarities[i] < avgSim * 0.85;
+                const isAbsoluteLow = similarities[i] < 0.65;
+
+                if (isRelativeDrop || isAbsoluteLow) {
+                    breakpoints.push(i + 1);
+                }
+            }
+            breakpoints.push(sentenceTexts.length);
+
+            // Create chunks from breakpoints
+            let chunkIndex = startIndex;
+            for (let i = 0; i < breakpoints.length - 1; i++) {
+                const start = breakpoints[i];
+                const end = breakpoints[i + 1];
+                const content = sentenceTexts.slice(start, end).join(' ').trim();
+
+                if (content.length < 50) continue;
+
+                if (content.length > 5000) {
+                    const subChunks = this.splitLargeChunk(content, documentId, pageNumber, chunkIndex);
+                    chunks.push(...subChunks);
+                    chunkIndex += subChunks.length;
+                } else {
+                    chunks.push({
+                        id: `${documentId}-chunk-${chunkIndex}`,
+                        documentId,
+                        content,
+                        pageNumber,
+                        chunkIndex,
+                        startPosition: start,
+                        endPosition: end,
+                    });
+                    chunkIndex++;
+                }
+            }
+        } catch (error) {
+            console.error('Semantic chunking failed:', error);
+            // If semantic chunking fails, return single chunk instead of falling back to paragraph-based
+            return [{
+                id: `${documentId}-chunk-${startIndex}`,
+                documentId,
+                content: text.trim(),
+                pageNumber,
+                chunkIndex: startIndex,
+                startPosition: 0,
+                endPosition: text.length,
+            }];
+        }
+
+        // If no chunks were created (shouldn't happen), return single chunk
+        if (chunks.length === 0) {
+            console.warn('Semantic chunking produced no chunks, returning single chunk');
+            return [{
+                id: `${documentId}-chunk-${startIndex}`,
+                documentId,
+                content: text.trim(),
+                pageNumber,
+                chunkIndex: startIndex,
+                startPosition: 0,
+                endPosition: text.length,
+            }];
+        }
+
+        return chunks;
+    }
+
+    // Cosine similarity helper
+    private cosineSimilarity(vecA: number[], vecB: number[]): number {
+        const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+        const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+        const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+        return dotProduct / (magnitudeA * magnitudeB);
+    }
+
+    // Split large chunks
+    private splitLargeChunk(text: string, documentId: string, pageNumber: number, startIndex: number): TextChunk[] {
+        const chunks: TextChunk[] = [];
+        const MAX_SIZE = 800;
+        const words = text.split(/\s+/);
+
+        for (let i = 0; i < words.length; i += MAX_SIZE) {
+            const content = words.slice(i, i + MAX_SIZE).join(' ');
+            chunks.push({
+                id: `${documentId}-chunk-${startIndex + chunks.length}`,
+                documentId,
+                content,
+                pageNumber,
+                chunkIndex: startIndex + chunks.length,
+                startPosition: i,
+                endPosition: i + Math.min(MAX_SIZE, words.length - i),
+            });
+        }
+        return chunks;
+    }
+
+    // Fallback: paragraph-based chunking
+    private createParagraphChunks(text: string, documentId: string, pageNumber: number, startIndex: number): TextChunk[] {
+        const chunks: TextChunk[] = [];
+        const paragraphs = text.split(/\n\s*\n/);
         let currentChunkContent = '';
         let chunkIndex = startIndex;
-        const TARGET_CHUNK_SIZE = 1000;
+        const TARGET_SIZE = 1000;
 
-        for (const paragraph of paragraphs) {
-            const trimmedPara = paragraph.trim();
-            if (!trimmedPara) continue;
+        for (const para of paragraphs) {
+            const trimmed = para.trim();
+            if (!trimmed) continue;
 
-            if (currentChunkContent.length + trimmedPara.length > TARGET_CHUNK_SIZE && currentChunkContent.length > 0) {
+            if (currentChunkContent.length + trimmed.length > TARGET_SIZE && currentChunkContent) {
                 chunks.push({
                     id: `${documentId}-chunk-${chunkIndex}`,
                     documentId,
                     content: currentChunkContent.trim(),
-                    pageNumber, // Correct page number!
+                    pageNumber,
                     chunkIndex,
-                    startPosition: 0, // Simplified for now
+                    startPosition: 0,
                     endPosition: currentChunkContent.length,
                 });
                 chunkIndex++;
                 currentChunkContent = '';
             }
-            currentChunkContent += trimmedPara + '\n\n';
+            currentChunkContent += trimmed + '\n\n';
         }
 
-        if (currentChunkContent.trim().length > 0) {
+        if (currentChunkContent.trim()) {
             chunks.push({
                 id: `${documentId}-chunk-${chunkIndex}`,
                 documentId,
@@ -158,7 +291,6 @@ export class PDFService {
                 endPosition: currentChunkContent.length,
             });
         }
-
         return chunks;
     }
 

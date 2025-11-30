@@ -52,7 +52,7 @@ export class VectorService {
     async query(
         queryText: string,
         userId: string,
-        topK: number = 5,
+        topK: number = 8, // Increased default for better context
         documentIds?: string[]
     ): Promise<Array<{
         chunkId: string;
@@ -64,11 +64,11 @@ export class VectorService {
         // Generate embedding for query
         const queryEmbedding = await cohereService.embedQuery(queryText);
 
-        // Call Supabase RPC function
-        const { data: matchDocuments, error } = await supabase.rpc('match_document_chunks', { // Changed RPC name
+        // Step 1: Fetch more candidates with low threshold
+        const { data: matchDocuments, error } = await supabase.rpc('match_document_chunks', {
             query_embedding: queryEmbedding,
-            match_threshold: 0.3, // Lowered threshold for better recall
-            match_count: topK,
+            match_threshold: 0.2, // Low threshold to get more candidates
+            match_count: topK * 3, // 3x candidates for reranking
             filter_user_id: userId
         });
 
@@ -77,22 +77,40 @@ export class VectorService {
             throw new Error(`Vector search failed: ${error.message}`);
         }
 
-        // Filter by documentIds if specified (client-side filter after retrieval, 
-        // or we could add it to RPC but array filtering in SQL is slightly more complex)
-        // For now, let's filter the results if needed. 
-        // Ideally, we should pass documentIds to the RPC for efficiency.
         let results = matchDocuments || [];
 
+        // Step 2: Filter by documentIds if specified
         if (documentIds && documentIds.length > 0) {
             results = results.filter((doc: any) =>
-                documentIds.includes(doc.document_id) // Changed from metadata.documentId to document_id column
+                documentIds.includes(doc.document_id)
             );
         }
 
-        return results.map((doc: any) => ({
+        // Step 3: Sort by similarity (reranking)
+        const sortedResults = results.sort((a: any, b: any) => b.similarity - a.similarity);
+
+        // Step 4: Apply adaptive threshold
+        if (sortedResults.length === 0) {
+            return [];
+        }
+
+        const bestScore = sortedResults[0].similarity;
+        const adaptiveThreshold = Math.max(
+            0.3,                    // Minimum absolute threshold
+            bestScore * 0.65        // 65% of best score
+        );
+
+        // Step 5: Filter by adaptive threshold and limit to topK
+        const filteredResults = sortedResults
+            .filter((doc: any) => doc.similarity >= adaptiveThreshold)
+            .slice(0, topK);
+
+        console.log(`Query results: ${filteredResults.length}/${results.length} chunks (threshold: ${adaptiveThreshold.toFixed(3)}, best: ${bestScore.toFixed(3)})`);
+
+        return filteredResults.map((doc: any) => ({
             chunkId: doc.id,
             content: doc.content,
-            documentId: doc.document_id, // Changed from metadata.documentId
+            documentId: doc.document_id,
             pageNumber: doc.metadata.pageNumber,
             similarity: doc.similarity
         }));

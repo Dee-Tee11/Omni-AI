@@ -18,27 +18,30 @@ export class CohereService {
      */
     async embed(texts: string[], images: string[] = []): Promise<number[][]> {
         try {
-            // Cohere Embed v3 Multimodal logic
-            // The API accepts a list of texts and/or images
-            const response = await cohere.embed({
-                model: 'embed-multilingual-v3.0', // Using multilingual for broader support, check if multimodal is specific model
-                texts: texts,
-                inputType: 'search_document',
-                embeddingTypes: ['float'],
-            });
+            // Cohere API limit is typically 96 texts per call
+            const BATCH_SIZE = 96;
+            const allEmbeddings: number[][] = [];
 
-            if (Array.isArray(response.embeddings)) {
-                // The types from the SDK might be slightly different depending on version
-                // We assume it returns float[][]
-                return response.embeddings as number[][];
+            for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+                const batchTexts = texts.slice(i, i + BATCH_SIZE);
+
+                const response = await cohere.embed({
+                    model: 'embed-multilingual-v3.0',
+                    texts: batchTexts,
+                    inputType: 'search_document',
+                    embeddingTypes: ['float'],
+                });
+
+                if (Array.isArray(response.embeddings)) {
+                    allEmbeddings.push(...(response.embeddings as number[][]));
+                } else if (response.embeddings && 'float' in response.embeddings) {
+                    allEmbeddings.push(...(response.embeddings.float as number[][]));
+                } else {
+                    throw new Error('Unexpected embedding format from Cohere');
+                }
             }
 
-            // Handle object response if applicable
-            if (response.embeddings && 'float' in response.embeddings) {
-                return response.embeddings.float as number[][];
-            }
-
-            throw new Error('Unexpected embedding format from Cohere');
+            return allEmbeddings;
         } catch (error) {
             console.error('Error generating embeddings:', error);
             throw error;

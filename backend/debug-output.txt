@@ -1,0 +1,27 @@
+📊 Analysis:
+Average Similarity: 0.7039
+Calculated Threshold: 0.7000
+
+Detailed Similarities:
+[0] 0.7465 🟢 | "A História da Computação
+    
+..." <-> "O ábaco, inventado na Babilóni..."
+[1] 0.5727 🔴 BREAK | "O ábaco, inventado na Babilóni..." <-> "C...."
+[2] 0.5488 🔴 BREAK | "C...." <-> ", foi a primeira ferramenta co..."
+[3] 0.8097 🟢 | ", foi a primeira ferramenta co..." <-> "No século XIX, Charles Babbage..."
+[4] 0.7834 🟢 | "No século XIX, Charles Babbage..." <-> "Ada Lovelace escreveu o primei..."
+[5] 0.7301 🟢 | "Ada Lovelace escreveu o primei..." <-> "Na década de 1940, surgiram os..."
+[6] 0.8181 🟢 | "Na década de 1940, surgiram os..." <-> "A invenção do transístor em 19..."
+[7] 0.8503 🟢 | "A invenção do transístor em 19..." <-> "Os circuitos integrados e os m..."
+[8] 0.7935 🟢 | "Os circuitos integrados e os m..." <-> "A internet, desenvolvida inici..."
+[9] 0.8029 🟢 | "A internet, desenvolvida inici..." <-> "Hoje, a inteligência artificia..."
+[10] 0.6468 🟢 | "Hoje, a inteligência artificia..." <-> "Biologia Marinha e Oceanografi..."
+[11] 0.8067 🟢 | "Biologia Marinha e Oceanografi..." <-> "Dado que na biologia muitos fi..."
+[12] 0.6614 🟢 | "Dado que na biologia muitos fi..." <-> "Os oceanos cobrem cerca de 71%..."
+[13] 0.7150 🟢 | "Os oceanos cobrem cerca de 71%..." <-> "A profundidade média é de cerc..."
+[14] 0.7614 🟢 | "A profundidade média é de cerc..." <-> "A Fossa das Marianas é o local..."
+[15] 0.6717 🟢 | "A Fossa das Marianas é o local..." <-> "O fitoplâncton é a base da cad..."
+[16] 0.5408 🔴 BREAK | "O fitoplâncton é a base da cad..." <-> "Os recifes de coral são ecossi..."
+[17] 0.4639 🔴 BREAK | "Os recifes de coral são ecossi..." <-> "A baleia azul é o maior animal..."
+[18] 0.6255 🔴 BREAK | "A baleia azul é o maior animal..." <-> "As correntes oceânicas regulam..."
+[19] 0.7295 🟢 | "As correntes oceânicas regulam..." <-> "A poluição marinha, incluindo ..."

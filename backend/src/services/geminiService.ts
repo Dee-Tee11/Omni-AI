@@ -23,16 +23,41 @@ export class GeminiService {
         context: { text: string[], images: string[] }
     ): Promise<string> {
         try {
-            const prompt = [
-                "Você é um assistente de estudos inteligente e útil.",
-                "Responda à pergunta do usuário com base EXCLUSIVAMENTE no contexto fornecido (texto e imagens).",
-                "Se a resposta não estiver no contexto, diga que não sabe.",
-                "Cite as fontes sempre.",
-                "\nCONTEXTO DE TEXTO:",
-                ...context.text,
-                "\nPERGUNTA:",
-                question
-            ];
+            // Enhanced system prompt for better responses
+            const systemPrompt = `Você é um assistente de estudos especializado e preciso.
+
+INSTRUÇÕES CRÍTICAS:
+1. Use APENAS informações do contexto fornecido abaixo
+2. Se a resposta não estiver no contexto, diga explicitamente "Não encontrei essa informação nos documentos fornecidos"
+3. Cite SEMPRE as fontes mencionando os números das páginas
+4. Estruture respostas com markdown para melhor legibilidade
+
+FORMATAÇÃO OBRIGATÓRIA:
+- Use ## para títulos de seção principais
+- Use **negrito** para conceitos-chave e definições
+- Use listas numeradas (1., 2., 3.) para sequências e processos
+- Use listas com bullets (-) para pontos relacionados
+- No final, inclua: "📚 **Fontes**: Páginas X, Y, Z"
+
+EVITE ABSOLUTAMENTE:
+❌ Inventar informação não presente no contexto
+❌ Usar conhecimento geral não relacionado aos documentos
+❌ Respostas vagas sem evidência específica
+❌ Afirmações sem citar a fonte`;
+
+            const contextText = context.text
+                .map((text, idx) => `[Fonte ${idx + 1}]\n${text}`)
+                .join('\n\n---\n\n');
+
+            const fullPrompt = `${systemPrompt}
+
+CONTEXTO DOS DOCUMENTOS:
+${contextText}
+
+PERGUNTA DO ESTUDANTE:
+${question}
+
+RESPOSTA (estruturada e completa):`;
 
             const imageParts = await Promise.all(
                 context.images.map(async (imagePath) => {
@@ -40,16 +65,30 @@ export class GeminiService {
                     return {
                         inlineData: {
                             data: imageData.toString('base64'),
-                            mimeType: 'image/png', // Assuming PNG for now, logic should detect
+                            mimeType: 'image/png',
                         },
                     };
                 })
             );
 
-            const result = await this.model.generateContent([
-                ...prompt,
-                ...imageParts
-            ]);
+            // Construct the request object correctly for the SDK
+            const result = await this.model.generateContent({
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        { text: fullPrompt },
+                        ...imageParts.map(part => ({
+                            inlineData: part.inlineData
+                        }))
+                    ]
+                }],
+                generationConfig: {
+                    temperature: 0.3,
+                    topP: 0.9,
+                    topK: 40,
+                    maxOutputTokens: 2048,
+                }
+            });
 
             const response = await result.response;
             return response.text();
