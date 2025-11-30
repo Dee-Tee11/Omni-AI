@@ -1,5 +1,5 @@
 import Groq from 'groq-sdk';
-import { pdfService } from './pdfService.js';
+import { supabase } from '../lib/supabase.js';
 import crypto from 'crypto';
 import type { GenerateQuizRequest, QuizSet, QuizQuestion } from '../types/index.js';
 import { env } from '../config.js';
@@ -14,17 +14,27 @@ export class QuizService {
     async generateQuiz(request: GenerateQuizRequest): Promise<QuizSet> {
         const { documentId, count = 10, difficulty = 'mixed' } = request;
 
-        // Get document and chunks
-        const docData = await pdfService.getDocument(documentId);
-        if (!docData) {
+        // Get document from Supabase
+        const { data: document, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id', documentId)
+            .single();
+
+        if (error || !document) {
             throw new Error('Document not found');
         }
 
-        const { document } = docData;
+        // Get document chunks for content
+        const { data: chunks } = await supabase
+            .from('document_chunks')
+            .select('content')
+            .eq('document_id', documentId)
+            .limit(15); // Get first 15 chunks for context
 
-        // Use first N chunks or entire document text (limited for token efficiency)
+        // Use chunks or limit context size
         const maxChars = 12000; // Limit context size
-        const textToAnalyze = document.textContent.slice(0, maxChars);
+        const textToAnalyze = chunks?.map(c => c.content).join('\n\n').slice(0, maxChars) || '';
 
         // Build prompt for quiz generation
         const systemPrompt = `Você é um especialista em criar quizzes educacionais de alta qualidade.

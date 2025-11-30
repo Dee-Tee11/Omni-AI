@@ -17,7 +17,7 @@ export class RAGService {
             return {
                 answer: 'Não encontrei informação relevante nos documentos enviados para responder a essa pergunta.',
                 sources: [],
-                model: 'gemini-1.5-pro',
+                model: 'gemini-2.5-pro',
             };
         }
 
@@ -56,7 +56,7 @@ export class RAGService {
                 content: chunk.content,
                 similarity: chunk.similarity,
             })),
-            model: 'gemini-1.5-pro',
+            model: 'gemini-2.5-pro',
         };
     }
 

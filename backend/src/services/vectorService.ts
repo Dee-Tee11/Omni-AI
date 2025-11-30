@@ -23,6 +23,7 @@ export class VectorService {
             const chunk = chunks[i];
             documentsToInsert.push({
                 user_id: userId,
+                document_id: chunk.documentId, // Explicitly set document_id column
                 content: chunk.content,
                 embedding: embeddings[i],
                 metadata: {
@@ -66,7 +67,7 @@ export class VectorService {
         // Call Supabase RPC function
         const { data: matchDocuments, error } = await supabase.rpc('match_document_chunks', { // Changed RPC name
             query_embedding: queryEmbedding,
-            match_threshold: 0.5, // Adjust threshold as needed
+            match_threshold: 0.3, // Lowered threshold for better recall
             match_count: topK,
             filter_user_id: userId
         });

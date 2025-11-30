@@ -9,6 +9,27 @@ const api = axios.create({
     },
 });
 
+// Add Clerk authentication token to all requests
+let getTokenFunction: (() => Promise<string | null>) | null = null;
+
+export const setAuthToken = (getToken: () => Promise<string | null>) => {
+    getTokenFunction = getToken;
+};
+
+api.interceptors.request.use(async (config) => {
+    if (getTokenFunction) {
+        try {
+            const token = await getTokenFunction();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        } catch (error) {
+            console.error('Error getting auth token:', error);
+        }
+    }
+    return config;
+});
+
 // Types
 export interface Document {
     id: string;

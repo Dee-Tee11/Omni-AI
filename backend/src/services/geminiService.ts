@@ -8,8 +8,8 @@ if (!env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY || 'dummy');
 
-// Using Gemini 1.5 Pro (or 2.5 if available via API name, usually 'gemini-1.5-pro-latest')
-const MODEL_NAME = 'gemini-1.5-pro-latest';
+// Using Gemini 2.5 Pro
+const MODEL_NAME = 'gemini-2.5-pro';
 
 export class GeminiService {
     private model;

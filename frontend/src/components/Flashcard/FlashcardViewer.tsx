@@ -10,7 +10,6 @@ import { supabaseFlashcardService } from '../../services/supabaseFlashcardServic
 import { supabaseClassService } from '../../services/supabaseClassService';
 import { generateFlashcards, getDocuments, Document, type Class, type FlashcardSet } from '../../services/api';
 import { autoSaveFlashcardsToClass } from '../../services/classHelpers';
-import './FlashcardViewer.css';
 
 interface FlashcardViewerProps {
   documentId?: string;

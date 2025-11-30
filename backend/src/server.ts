@@ -110,7 +110,14 @@ app.get('/api/documents', requireAuth, async (req, res) => {
 
         if (error) throw error;
 
-        res.json({ documents: data || [] });
+        if (error) throw error;
+
+        const documents = (data || []).map(doc => ({
+            ...doc,
+            uploadDate: doc.created_at || new Date().toISOString()
+        }));
+
+        res.json({ documents });
     } catch (error: any) {
         console.error('Get documents error:', error);
         res.status(500).json({ error: error.message });
@@ -136,7 +143,10 @@ app.get('/api/documents/:id', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Document not found' });
         }
 
-        res.json(data);
+        res.json({
+            ...data,
+            uploadDate: data.created_at || new Date().toISOString()
+        });
     } catch (error: any) {
         console.error('Get document error:', error);
         res.status(500).json({ error: error.message });

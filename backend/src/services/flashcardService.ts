@@ -1,5 +1,5 @@
 import Groq from 'groq-sdk';
-import { pdfService } from './pdfService.js';
+import { supabase } from '../lib/supabase.js';
 import crypto from 'crypto';
 import type { GenerateFlashcardsRequest, FlashcardSet, Flashcard } from '../types/index.js';
 import { env } from '../config.js';
@@ -14,17 +14,27 @@ export class FlashcardService {
     async generateFlashcards(request: GenerateFlashcardsRequest): Promise<FlashcardSet> {
         const { documentId, count = 10, includeImages = false } = request;
 
-        // Get document and chunks
-        const docData = await pdfService.getDocument(documentId);
-        if (!docData) {
+        // Get document from Supabase
+        const { data: document, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('id', documentId)
+            .single();
+
+        if (error || !document) {
             throw new Error('Document not found');
         }
 
-        const { document, chunks } = docData;
+        // Get document chunks for content
+        const { data: chunks } = await supabase
+            .from('document_chunks')
+            .select('content')
+            .eq('document_id', documentId)
+            .limit(10); // Get first 10 chunks for context
 
-        // Use first N chunks or entire document text (limited for token efficiency)
+        // Use chunks or limit context size
         const maxChars = 8000; // Limit context size
-        const textToAnalyze = document.textContent.slice(0, maxChars);
+        const textToAnalyze = chunks?.map(c => c.content).join('\n\n').slice(0, maxChars) || '';
 
         // Build prompt for flashcard generation
         const systemPrompt = `Você é um especialista em criar flashcards educacionais de alta qualidade.

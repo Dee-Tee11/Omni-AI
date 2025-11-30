@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import pdfParse from 'pdf-parse';
 import crypto from 'crypto';
 import type { Document, TextChunk, ImageMetadata } from '../types/index.js';
 import { env } from '../config.js';
@@ -26,13 +25,19 @@ export class PDFService {
         const documentId = crypto.randomUUID();
         const buffer = file.buffer;
 
-        // Extract text using pdf-parse
-        const pdfData = await pdfParse(buffer);
-        const textContent = pdfData.text;
-        const pageCount = pdfData.numpages;
+        // Convert Buffer to Uint8Array for pdfjs
+        const uint8Array = new Uint8Array(buffer);
 
-        // Convert pages to images
-        const images = await this.convertPagesToImages(buffer, documentId);
+        // Load the document
+        const loadingTask = pdfjsLib.getDocument({
+            data: uint8Array,
+            standardFontDataUrl: 'node_modules/pdfjs-dist/standard_fonts/',
+        });
+
+        const pdfDocument = await loadingTask.promise;
+        const pageCount = pdfDocument.numPages;
+        let fullText = '';
+        const chunks: TextChunk[] = [];
 
         // Save PDF file locally
         const pdfPath = path.join(UPLOADS_DIR, `${documentId}.pdf`);
@@ -46,6 +51,7 @@ export class PDFService {
                 user_id: userId,
                 filename: file.originalname,
                 file_path: `${documentId}.pdf`,
+                created_at: new Date().toISOString(),
             });
 
         if (dbError) {
@@ -53,8 +59,48 @@ export class PDFService {
             throw new Error(`Failed to save document metadata: ${dbError.message}`);
         }
 
-        // Create semantic chunks
-        const chunks = this.createSemanticChunks(textContent, documentId, userId);
+        // Process each page for Text and Images
+        const images: ImageMetadata[] = [];
+        const docImagesDir = path.join(IMAGES_DIR, documentId);
+        await fs.mkdir(docImagesDir, { recursive: true });
+
+        for (let i = 1; i <= pageCount; i++) {
+            const page = await pdfDocument.getPage(i);
+
+            // 1. Extract Text
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n\n';
+
+            // Create chunks for this page
+            const pageChunks = this.createPageChunks(pageText, documentId, i, chunks.length);
+            chunks.push(...pageChunks);
+
+            // 2. Render Image
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = createCanvas(viewport.width, viewport.height);
+            const context = canvas.getContext('2d');
+
+            await page.render({
+                canvasContext: context as any,
+                viewport: viewport,
+                canvas: canvas as any,
+            }).promise;
+
+            const imageBuffer = await canvas.encode('png');
+            const imagePath = path.join(docImagesDir, `page-${i}.png`);
+            await fs.writeFile(imagePath, imageBuffer);
+
+            images.push({
+                id: `${documentId}-img-${i}`,
+                documentId,
+                pageNumber: i,
+                index: i - 1,
+                width: viewport.width,
+                height: viewport.height,
+                path: imagePath
+            });
+        }
 
         // Save chunks to Supabase
         await vectorService.addChunks(chunks, userId);
@@ -64,7 +110,7 @@ export class PDFService {
             filename: file.originalname,
             uploadDate: new Date(),
             pageCount,
-            textContent,
+            textContent: fullText,
             chunkCount: chunks.length,
             imageCount: images.length,
         };
@@ -72,111 +118,59 @@ export class PDFService {
         return document;
     }
 
-    private async convertPagesToImages(pdfBuffer: Buffer, documentId: string): Promise<ImageMetadata[]> {
-        const images: ImageMetadata[] = [];
-        const docImagesDir = path.join(IMAGES_DIR, documentId);
-        await fs.mkdir(docImagesDir, { recursive: true });
-
-        try {
-            // Convert Buffer to Uint8Array for pdfjs
-            const uint8Array = new Uint8Array(pdfBuffer);
-
-            // Load the document
-            const loadingTask = pdfjsLib.getDocument({
-                data: uint8Array,
-                standardFontDataUrl: 'node_modules/pdfjs-dist/standard_fonts/',
-            });
-
-            const pdfDocument = await loadingTask.promise;
-            const numPages = pdfDocument.numPages;
-
-            for (let i = 1; i <= numPages; i++) {
-                const page = await pdfDocument.getPage(i);
-                const viewport = page.getViewport({ scale: 1.5 }); // 1.5 scale for better quality
-
-                // Create canvas
-                const canvas = createCanvas(viewport.width, viewport.height);
-                const context = canvas.getContext('2d');
-
-                // Render page to canvas
-                await page.render({
-                    canvasContext: context as any,
-                    viewport: viewport,
-                    canvas: canvas as any, // Required for legacy build
-                }).promise;
-
-                // Save as PNG
-                const imageBuffer = await canvas.encode('png');
-                const imagePath = path.join(docImagesDir, `page-${i}.png`);
-                await fs.writeFile(imagePath, imageBuffer);
-
-                images.push({
-                    id: `${documentId}-img-${i}`,
-                    documentId,
-                    pageNumber: i,
-                    index: i - 1,
-                    width: viewport.width,
-                    height: viewport.height,
-                    path: imagePath
-                });
-            }
-        } catch (error) {
-            console.error('Error converting PDF to images:', error);
-        }
-
-        return images;
-    }
-
-    private createSemanticChunks(text: string, documentId: string, userId: string): TextChunk[] {
+    // Helper to create chunks specifically for a page
+    private createPageChunks(text: string, documentId: string, pageNumber: number, startIndex: number): TextChunk[] {
         const chunks: TextChunk[] = [];
-
-        // Split by double newline (paragraphs)
-        const paragraphs = text.split(/\n\s*\n/);
+        const paragraphs = text.split(/\n\s*\n/); // Split by paragraphs or double newlines
 
         let currentChunkContent = '';
-        let currentChunkStartIndex = 0;
-        let chunkIndex = 0;
-
-        const TARGET_CHUNK_SIZE = 1000; // characters (~250 tokens)
+        let chunkIndex = startIndex;
+        const TARGET_CHUNK_SIZE = 1000;
 
         for (const paragraph of paragraphs) {
             const trimmedPara = paragraph.trim();
             if (!trimmedPara) continue;
 
-            // If adding this paragraph exceeds target size, save current chunk and start new
             if (currentChunkContent.length + trimmedPara.length > TARGET_CHUNK_SIZE && currentChunkContent.length > 0) {
                 chunks.push({
                     id: `${documentId}-chunk-${chunkIndex}`,
                     documentId,
                     content: currentChunkContent.trim(),
-                    pageNumber: 0, // TODO: Implement better page mapping for semantic chunks
+                    pageNumber, // Correct page number!
                     chunkIndex,
-                    startPosition: currentChunkStartIndex,
-                    endPosition: currentChunkStartIndex + currentChunkContent.length,
+                    startPosition: 0, // Simplified for now
+                    endPosition: currentChunkContent.length,
                 });
-
                 chunkIndex++;
                 currentChunkContent = '';
-                currentChunkStartIndex += currentChunkContent.length; // Approximation
             }
-
             currentChunkContent += trimmedPara + '\n\n';
         }
 
-        // Add remaining content
         if (currentChunkContent.trim().length > 0) {
             chunks.push({
                 id: `${documentId}-chunk-${chunkIndex}`,
                 documentId,
                 content: currentChunkContent.trim(),
-                pageNumber: 0,
+                pageNumber,
                 chunkIndex,
-                startPosition: currentChunkStartIndex,
-                endPosition: currentChunkStartIndex + currentChunkContent.length,
+                startPosition: 0,
+                endPosition: currentChunkContent.length,
             });
         }
 
         return chunks;
+    }
+
+    async getDocument(documentId: string): Promise<Document | null> {
+        // This method is kept for compatibility but should ideally be replaced by direct Supabase calls
+        // or implemented to fetch from Supabase if needed by other services
+        return null;
+    }
+
+    async getAllDocuments(): Promise<Document[]> {
+        // This method is kept for compatibility but should ideally be replaced by direct Supabase calls
+        return [];
     }
 
     async deleteDocument(documentId: string): Promise<boolean> {
