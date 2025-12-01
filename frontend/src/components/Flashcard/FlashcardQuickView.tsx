@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ChevronRight, Sparkles, Zap } from 'lucide-react';
+import { Brain, ChevronRight, Sparkles } from 'lucide-react';
 import { generateFlashcards, type FlashcardSet } from '../../services/api';
-import { useGamification } from '../../context/GamificationContext';
 import './FlashcardQuickView.css';
 
 interface FlashcardQuickViewProps {
@@ -18,8 +17,7 @@ export const FlashcardQuickView: React.FC<FlashcardQuickViewProps> = ({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [showXPGain, setShowXPGain] = useState(false);
-    const { addEnergy } = useGamification();
+
 
     useEffect(() => {
         if (documentId) {
@@ -45,20 +43,20 @@ export const FlashcardQuickView: React.FC<FlashcardQuickViewProps> = ({
         setIsFlipped(!isFlipped);
     };
 
-    const handleAnswer = (difficulty: 'easy' | 'medium' | 'hard') => {
+    const handleAnswer = () => {
         // Award XP based on difficulty
-        const xpRewards = {
-            hard: 50,   // More XP for harder cards
-            medium: 30,
-            easy: 20
-        };
+        // const xpRewards = {
+        //     hard: 50,   // More XP for harder cards
+        //     medium: 30,
+        //     easy: 20
+        // };
 
-        const xpGained = xpRewards[difficulty];
-        addEnergy(xpGained);
+        // const xpGained = xpRewards[difficulty];
+        // addEnergy(xpGained);
 
         // Show XP gain animation
-        setShowXPGain(true);
-        setTimeout(() => setShowXPGain(false), 2000);
+        // setShowXPGain(true);
+        // setTimeout(() => setShowXPGain(false), 2000);
 
         // Move to next card
         if (currentIndex < (flashcardSet?.flashcards.length || 0) - 1) {
@@ -109,19 +107,7 @@ export const FlashcardQuickView: React.FC<FlashcardQuickViewProps> = ({
     return (
         <div className="flashcard-quick-view">
             {/* XP Gain Animation */}
-            <AnimatePresence>
-                {showXPGain && (
-                    <motion.div
-                        className="xp-gain-notification"
-                        initial={{ opacity: 0, y: -20, scale: 0.8 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -30, scale: 0.6 }}
-                    >
-                        <Zap size={16} />
-                        <span>+XP</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+
 
             <div className="card-header">
                 <div className="card-icon purple">
@@ -179,21 +165,21 @@ export const FlashcardQuickView: React.FC<FlashcardQuickViewProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleAnswer('hard'); }}
+                        onClick={(e) => { e.stopPropagation(); handleAnswer(); }}
                         className="action-btn hard"
                         title="Difícil +50 XP"
                     >
                         😓
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleAnswer('medium'); }}
+                        onClick={(e) => { e.stopPropagation(); handleAnswer(); }}
                         className="action-btn medium"
                         title="Médio +30 XP"
                     >
                         😐
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleAnswer('easy'); }}
+                        onClick={(e) => { e.stopPropagation(); handleAnswer(); }}
                         className="action-btn easy"
                         title="Fácil +20 XP"
                     >

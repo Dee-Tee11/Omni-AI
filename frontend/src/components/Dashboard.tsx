@@ -5,9 +5,7 @@ import { FlashcardViewer } from './Flashcard/FlashcardViewer';
 import { QuizView } from './Quiz/QuizView';
 import { StudyTabs, TabType } from './StudyTabs';
 import { ChatInterface } from './ChatInterface';
-import CivilizationPath from './CivilizationPath/CivilizationPath';
-import { useGamification } from '../context/GamificationContext';
-import { Book, Archive, Hammer, Plus, FileText, Trash2 } from 'lucide-react';
+import { Book, Plus, FileText, Trash2 } from 'lucide-react';
 import { getDocuments, deleteDocument, type Document } from '../services/api';
 import './Dashboard.css';
 
@@ -17,7 +15,6 @@ const Dashboard: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<TabType>('chat');
-  const { currentEra, civilizationXP } = useGamification();
 
   useEffect(() => {
     loadDocuments();
@@ -61,18 +58,15 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <header className="dashboard-header">
         <div className="dashboard-header-content">
-          <h1>Olá, Explorador!</h1>
-          <p>Vamos construir a tua civilização hoje.</p>
-        </div>
-        <div className="dashboard-xp-badge">
-          {currentEra} • {civilizationXP} XP
+          <h1>Lexis</h1>
+          <p>O teu assistente de estudo inteligente.</p>
         </div>
       </header>
 
       {/* Main Grid */}
       <div className="dashboard-grid">
 
-        {/* Center Hero - Builder's Kit */}
+        {/* Center Hero - Study Area */}
         <div className="builders-kit-card">
           <div className="builders-kit-gradient" />
 
@@ -84,9 +78,9 @@ const Dashboard: React.FC = () => {
             {!activeDocument ? (
               <>
                 <div className="kit-icon-container">
-                  <Hammer size={64} className="kit-icon" />
+                  <Book size={64} className="kit-icon" />
                 </div>
-                <h2>Kit de Construção</h2>
+                <h2>Área de Estudo</h2>
                 <p>
                   Selecione um documento da lista ou faça upload de um novo para começar a estudar.
                 </p>
@@ -106,7 +100,7 @@ const Dashboard: React.FC = () => {
                     onClick={() => setActiveDocument(null)}
                     className="back-btn"
                   >
-                    ← Voltar para o Kit
+                    ← Voltar
                   </button>
                   <h2 className="document-title">
                     {activeDocument.filename}
@@ -199,29 +193,8 @@ const Dashboard: React.FC = () => {
               onTabChange={setViewMode}
             />
           )}
-
-          {/* Time Capsule */}
-          <div className="time-capsule-card">
-            <div className="card-header">
-              <div className="card-icon blue">
-                <Archive size={20} />
-              </div>
-              <h3 className="card-title">Cápsula do Tempo</h3>
-            </div>
-            <div className="capsule-content">
-              <span className="capsule-text">Histórico de estudo</span>
-            </div>
-          </div>
         </div>
       </div>
-
-
-
-      {/* Bottom Section - Civilization Path */}
-      <section className="civilization-section">
-        <h3 className="section-title">Caminho da Civilização</h3>
-        <CivilizationPath />
-      </section>
     </div>
   );
 };

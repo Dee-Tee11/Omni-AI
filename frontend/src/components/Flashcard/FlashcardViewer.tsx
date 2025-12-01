@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, RotateCcw, Plus, Brain, Sparkles, Loader2, FileText, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw, Plus, Brain, Loader2, FileText, Play } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import sanitizeHtml from 'sanitize-html';
-import { useGamification } from '../../context/GamificationContext';
 import { useAuth } from '@clerk/clerk-react';
 import { createClerkSupabaseClient } from '../../lib/supabase';
 import { supabaseFlashcardService } from '../../services/supabaseFlashcardService';
@@ -40,7 +39,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>('');
 
-  const { addEnergy, currentEra, civilizationXP } = useGamification();
+
 
   useEffect(() => {
     fetchDocuments();
@@ -140,10 +139,10 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
     setIsFlipped(prev => !prev);
   };
 
-  const handleReview = (difficulty: 'easy' | 'medium' | 'hard') => {
+  const handleReview = () => {
     // Award XP based on difficulty
-    const xpReward = difficulty === 'hard' ? 30 : difficulty === 'medium' ? 20 : 10;
-    addEnergy(xpReward);
+    // const xpReward = difficulty === 'hard' ? 30 : difficulty === 'medium' ? 20 : 10;
+    // addEnergy(xpReward);
 
     if (currentIndex < (flashcardSet?.flashcards.length || 0) - 1) {
       handleNext();
@@ -283,23 +282,23 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
                 <div className="review-buttons">
                   <button
-                    onClick={() => handleReview('hard')}
+                    onClick={() => handleReview()}
                     className="review-btn hard"
-                    title="Difícil - +30 XP"
+                    title="Difícil"
                   >
                     Difícil
                   </button>
                   <button
-                    onClick={() => handleReview('medium')}
+                    onClick={() => handleReview()}
                     className="review-btn medium"
-                    title="Médio - +20 XP"
+                    title="Médio"
                   >
                     Médio
                   </button>
                   <button
-                    onClick={() => handleReview('easy')}
+                    onClick={() => handleReview()}
                     className="review-btn easy"
-                    title="Fácil - +10 XP"
+                    title="Fácil"
                   >
                     Fácil
                   </button>
@@ -314,34 +313,36 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
                   <ChevronRight size={20} />
                 </button>
               </div>
-            </div>
+            </div >
           </>
         ) : null}
 
-        {showSaveModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <h2>Salvar Flashcards na Aula</h2>
-              <div className="form-group">
-                <label>Selecione a Aula</label>
-                <select
-                  value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="class-select"
-                >
-                  <option value="">-- Selecione uma aula --</option>
-                  {classes.map(cls => (
-                    <option key={cls.id} value={cls.id}>{cls.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+        {
+          showSaveModal && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>Salvar Flashcards na Aula</h2>
+                <div className="form-group">
+                  <label>Selecione a Aula</label>
+                  <select
+                    value={selectedClassId}
+                    onChange={(e) => setSelectedClassId(e.target.value)}
+                    className="class-select"
+                  >
+                    <option value="">-- Selecione uma aula --</option>
+                    {classes.map(cls => (
+                      <option key={cls.id} value={cls.id}>{cls.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="modal-actions">
+                  <button className="btn btn-secondary" onClick={() => setShowSaveModal(false)}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleConfirmSave} disabled={!selectedClassId}>Salvar</button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         <style>{`
           .flashcard-container {
@@ -359,7 +360,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%);
+            background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-primary) 100%);
             border-radius: 24px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
           }
@@ -367,19 +368,19 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
           .flashcard-header h1 {
             font-size: 2rem;
             margin: 0;
-            color: #0369A1;
+            color: var(--color-text-primary);
             font-weight: 800;
           }
 
           .gradient-text {
-            background: linear-gradient(135deg, #0369A1, #0284C7);
+            background: var(--color-accent-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
 
           .flashcard-header p {
-            color: #075985;
+            color: var(--color-text-secondary);
             margin: 0.25rem 0 0;
             opacity: 0.8;
           }
@@ -403,14 +404,15 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
           }
 
           .btn-primary {
-            background: linear-gradient(135deg, #0369A1 0%, #0284C7 100%);
+            background: var(--color-primary);
             color: white;
-            box-shadow: 0 4px 6px rgba(3, 105, 161, 0.2);
+            box-shadow: 0 4px 6px rgba(255, 148, 148, 0.2);
           }
 
           .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(3, 105, 161, 0.3);
+            box-shadow: 0 6px 8px rgba(255, 148, 148, 0.3);
+            background: var(--color-accent-secondary);
           }
 
           .btn-secondary {
@@ -470,7 +472,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
           .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #0369A1, #0284C7);
+            background: var(--color-accent-gradient);
             border-radius: 999px;
           }
 
@@ -535,13 +537,13 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
           .flashcard-back {
             transform: rotateY(180deg);
-            background: linear-gradient(135deg, rgba(3, 105, 161, 0.05), rgba(2, 132, 199, 0.05)), white;
+            background: linear-gradient(135deg, rgba(255, 148, 148, 0.05), rgba(255, 209, 209, 0.05)), white;
           }
 
           .card-label {
             font-size: 0.875rem;
             font-weight: 700;
-            color: #0369A1;
+            color: var(--color-primary);
             margin-bottom: 1.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -706,8 +708,8 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
           .class-select:focus {
             outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(255, 148, 148, 0.1);
           }
 
           .modal-actions {
@@ -717,7 +719,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
             margin-top: 2rem;
           }
         `}</style>
-      </div>
+      </div >
     );
   }
 
@@ -734,10 +736,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
           <p className="subtitle">Selecione um documento e comece a estudar</p>
         </div>
 
-        <div className="xp-badge">
-          <Sparkles size={18} fill="currentColor" />
-          <span>{currentEra} • {civilizationXP} XP</span>
-        </div>
+
       </div>
 
       <div className="content-grid">
@@ -838,7 +837,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         }
 
         .flashcard-selection-header {
-          background: linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%);
+          background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-primary-light) 100%);
           border-radius: 24px;
           padding: 2rem;
           display: flex;
@@ -858,12 +857,12 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         .title h1 {
           font-size: 2rem;
           font-weight: 800;
-          color: #0369A1;
+          color: var(--color-primary);
           margin: 0;
         }
 
         .subtitle {
-          color: #075985;
+          color: var(--color-accent-secondary);
           opacity: 0.8;
           font-size: 1rem;
           font-weight: 500;
@@ -871,13 +870,13 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         }
 
         .xp-badge {
-          background: #10B981;
+          background: var(--color-primary);
           color: white;
           padding: 0.75rem 1.5rem;
           border-radius: 9999px;
           font-weight: 700;
           font-size: 0.875rem;
-          box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+          box-shadow: 0 4px 6px rgba(255, 148, 148, 0.3);
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -911,17 +910,17 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         }
 
         .count-selector {
-          background: #F0F9FF;
+          background: var(--color-bg-tertiary);
           padding: 1.25rem;
           border-radius: 16px;
-          border: 1px solid #E0F2FE;
+          border: 1px solid var(--color-primary-light);
         }
 
         .selector-label {
           display: block;
           font-size: 0.875rem;
           font-weight: 700;
-          color: #0369A1;
+          color: var(--color-primary);
           margin-bottom: 1rem;
         }
 
@@ -935,9 +934,9 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
           flex: 1;
           padding: 0.75rem 0;
           border-radius: 10px;
-          border: 1px solid #BAE6FD;
+          border: 1px solid var(--color-primary-light);
           background: white;
-          color: #075985;
+          color: var(--color-text-secondary);
           font-weight: 600;
           font-size: 0.9rem;
           cursor: pointer;
@@ -945,15 +944,15 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         }
 
         .count-btn:hover {
-          background: #F0F9FF;
-          border-color: #0284C7;
+          background: var(--color-bg-tertiary);
+          border-color: var(--color-primary);
         }
 
         .count-btn.active {
-          background: #0369A1;
+          background: var(--color-primary);
           color: white;
-          border-color: #0369A1;
-          box-shadow: 0 4px 6px rgba(3, 105, 161, 0.2);
+          border-color: var(--color-primary);
+          box-shadow: 0 4px 6px rgba(255, 148, 148, 0.3);
           transform: translateY(-1px);
         }
 
@@ -991,14 +990,14 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         }
 
         .document-item:hover {
-          border-color: #7DD3FC;
-          background: #F0F9FF;
+          border-color: var(--color-primary-light);
+          background: var(--color-bg-tertiary);
         }
 
         .document-item.selected {
-          background: #F0F9FF;
-          border-color: #0369A1;
-          box-shadow: 0 0 0 1px #0369A1;
+          background: var(--color-bg-tertiary);
+          border-color: var(--color-primary);
+          box-shadow: 0 0 0 1px var(--color-primary);
         }
 
         .doc-name {
@@ -1047,7 +1046,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
         .spinning {
           animation: spin 1s linear infinite;
-          color: #0369A1;
+          color: var(--color-primary);
           margin-bottom: 1rem;
         }
 
@@ -1058,18 +1057,18 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
         .icon-circle {
           width: 96px;
           height: 96px;
-          background: #E0F2FE;
+          background: var(--color-bg-tertiary);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto 1.5rem;
-          color: #0369A1;
+          color: var(--color-primary);
         }
 
         .start-btn {
           margin-top: 2.5rem;
-          background: linear-gradient(135deg, #0369A1 0%, #0284C7 100%);
+          background: var(--color-accent-gradient);
           color: white;
           padding: 1.25rem 4rem;
           border-radius: 16px;
@@ -1077,7 +1076,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
           font-size: 1.25rem;
           border: none;
           cursor: pointer;
-          box-shadow: 0 10px 15px -3px rgba(3, 105, 161, 0.3);
+          box-shadow: 0 10px 15px -3px rgba(255, 148, 148, 0.3);
           transition: all 0.3s;
           display: flex;
           align-items: center;
@@ -1086,7 +1085,7 @@ export const FlashcardViewer: React.FC<FlashcardViewerProps> = ({ documentId: pr
 
         .start-btn:hover {
           transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 20px 25px -5px rgba(3, 105, 161, 0.4);
+          box-shadow: 0 20px 25px -5px rgba(255, 148, 148, 0.4);
         }
 
         .empty-icon {

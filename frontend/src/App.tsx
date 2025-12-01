@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import { FlashcardViewer } from './components/Flashcard/FlashcardViewer';
 import { QuizView } from './components/Quiz/QuizView';
 import MyClasses from './components/MyClasses';
 import { SummariesView } from './components/Summaries/SummariesView';
 import Sidebar from './components/SideBar/Sidebar';
-import { GamificationProvider } from './context/GamificationContext';
 import { setAuthToken } from './services/api';
 import './index.css';
 
@@ -33,22 +32,24 @@ const AppContent: React.FC = () => {
                 onToggleMini={() => setSidebarMini(!sidebarMini)}
             />
 
-            {/* Main Content Area */}
-            <main className={`w-full pb-24 md:pb-8 transition-all duration-300 ${sidebarOpen
-                ? sidebarMini
-                    ? 'md:pl-[100px]'
-                    : 'md:pl-[300px]'
-                : 'md:pl-0'
-                }`}>
-                {/* Hamburger Toggle Button */}
+            {/* Hamburger Toggle Button - Only show when sidebar is closed */}
+            {!sidebarOpen && (
                 <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    onClick={() => setSidebarOpen(true)}
                     className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:bg-gray-100 transition-colors hidden md:flex items-center justify-center"
-                    aria-label="Toggle Sidebar"
+                    aria-label="Open Sidebar"
                 >
-                    {sidebarOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
+                    <Menu size={24} className="text-gray-700" />
                 </button>
+            )}
 
+            {/* Main Content Area */}
+            <main className={`main-content ${sidebarOpen
+                ? sidebarMini
+                    ? 'sidebar-mini-open'
+                    : 'sidebar-full-open'
+                : 'sidebar-closed'
+                }`}>
                 <div className="w-full px-4">
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -61,25 +62,20 @@ const AppContent: React.FC = () => {
                     </Routes>
                 </div>
             </main>
-
-            {/* Mobile Navigation - Commented out as it is missing */}
-            {/* <MobileNav onUploadClick={() => { }} /> */}
         </div>
     );
 };
 
 const App: React.FC = () => {
     return (
-        <GamificationProvider>
-            <Router>
-                <SignedOut>
-                    <RedirectToSignIn />
-                </SignedOut>
-                <SignedIn>
-                    <AppContent />
-                </SignedIn>
-            </Router>
-        </GamificationProvider>
+        <Router>
+            <SignedOut>
+                <RedirectToSignIn />
+            </SignedOut>
+            <SignedIn>
+                <AppContent />
+            </SignedIn>
+        </Router>
     );
 };
 

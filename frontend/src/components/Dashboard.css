@@ -20,22 +20,8 @@
 .dashboard-header-content h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--color-text-primary);
     margin-bottom: 0.25rem;
-}
-
-.dashboard-header-content p {
-    color: #6b7280;
-    font-size: 0.875rem;
-}
-
-.dashboard-xp-badge {
-    background-color: #d1fae5;
-    color: #065f46;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-weight: 500;
-    font-size: 0.875rem;
 }
 
 /* Main Grid Layout */
@@ -53,7 +39,7 @@
 
 /* Builder's Kit Card */
 .builders-kit-card {
-    background: white;
+    background: var(--color-bg-secondary);
     border-radius: 1.5rem;
     padding: 2rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
@@ -71,7 +57,7 @@
 .builders-kit-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), transparent);
+    background: linear-gradient(to bottom right, rgba(255, 148, 148, 0.1), transparent);
     opacity: 0.5;
     pointer-events: none;
 }
@@ -86,7 +72,7 @@
 .kit-icon-container {
     width: 12rem;
     height: 12rem;
-    background-color: #d1fae5;
+    background-color: var(--color-bg-tertiary);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -95,30 +81,30 @@
 }
 
 .kit-icon {
-    color: #059669;
+    color: var(--color-primary);
 }
 
 .builders-kit-content h2 {
     font-size: 1.875rem;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--color-text-primary);
     margin-bottom: 0.5rem;
 }
 
 .builders-kit-content p {
-    color: #6b7280;
+    color: var(--color-text-secondary);
     max-width: 28rem;
     margin: 0 auto 2rem;
 }
 
 .add-document-btn {
-    background-color: #059669;
+    background-color: var(--color-primary);
     color: white;
     padding: 0.75rem 2rem;
     border-radius: 0.75rem;
     font-weight: 600;
     transition: background-color 0.2s;
-    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(255, 148, 148, 0.2);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -128,7 +114,7 @@
 }
 
 .add-document-btn:hover {
-    background-color: #047857;
+    background-color: var(--color-accent-secondary);
 }
 
 /* Active Document View */
@@ -140,7 +126,7 @@
 }
 
 .back-btn {
-    color: #6b7280;
+    color: var(--color-text-secondary);
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -150,15 +136,11 @@
     cursor: pointer;
     transition: color 0.2s;
     margin-top: 1rem;
-    color: #6b7280;
     font-size: 0.875rem;
-    border: none;
-    background: transparent;
-    cursor: pointer;
 }
 
 .cancel-btn:hover {
-    color: #374151;
+    color: var(--color-text-primary);
 }
 
 /* Right Column Cards */
@@ -170,7 +152,7 @@
 
 /* Documents List Card */
 .documents-card {
-    background: white;
+    background: var(--color-bg-secondary);
     border-radius: 1.5rem;
     padding: 1.5rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
@@ -190,14 +172,14 @@
 
 .card-icon {
     padding: 0.5rem;
-    background-color: #d1fae5;
+    background-color: var(--color-bg-tertiary);
     border-radius: 0.5rem;
-    color: #059669;
+    color: var(--color-primary);
 }
 
 .card-title {
     font-weight: 700;
-    color: #1f2937;
+    color: var(--color-text-primary);
 }
 
 .documents-list {
@@ -229,13 +211,13 @@
 
 .loading-text {
     text-align: center;
-    color: #9ca3af;
+    color: var(--color-text-secondary);
     padding: 1rem 0;
 }
 
 .empty-state {
     text-align: center;
-    color: #9ca3af;
+    color: var(--color-text-secondary);
     padding: 2rem;
     border: 2px dashed #e5e7eb;
     border-radius: 0.75rem;
@@ -269,8 +251,8 @@
 }
 
 .document-item.active {
-    background: #ecfdf5;
-    border-color: #a7f3d0;
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-primary-light);
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -291,8 +273,8 @@
 }
 
 .document-item.active .document-icon {
-    background: #a7f3d0;
-    color: #047857;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
 }
 
 .document-info {
@@ -303,14 +285,14 @@
 .document-name {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .document-item.active .document-name {
-    color: #064e3b;
+    color: var(--color-primary);
 }
 
 .document-date {
@@ -336,49 +318,6 @@
 .delete-btn:hover {
     color: #ef4444;
     background: #fef2f2;
-}
-
-/* Time Capsule Card */
-.time-capsule-card {
-    background: white;
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
-}
-
-.card-icon.blue {
-    background-color: #dbeafe;
-    color: white;
-}
-
-.capsule-content {
-    background: #eff6ff;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed #93c5fd;
-}
-
-.capsule-text {
-    color: #60a5fa;
-    font-size: 0.875rem;
-    font-weight: 500;
-}
-
-/* Civilization Path Section */
-.civilization-section {
-    margin-top: 2rem;
-}
-
-.section-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1rem;
-    margin-left: 0.5rem;
 }
 
 /* Responsive Adjustments */

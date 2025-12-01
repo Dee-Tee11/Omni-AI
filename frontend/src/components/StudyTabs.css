@@ -33,14 +33,14 @@
 }
 
 .tab-header:hover {
-    background: rgba(124, 58, 237, 0.1);
-    color: #7c3aed;
+    background: var(--color-bg-tertiary);
+    color: var(--color-primary);
 }
 
 .tab-header.active {
-    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    background: var(--color-primary);
     color: white;
-    box-shadow: 0 4px 12px -2px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 12px -2px rgba(255, 148, 148, 0.3);
 }
 
 .tab-header svg {

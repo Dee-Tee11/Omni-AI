@@ -63,7 +63,7 @@ Os sistemas de gestão de bases de dados são utilizados em praticamente todas a
         return (
             <div className="summary-view loading">
                 <div className="card-header">
-                    <div className="card-icon green">
+                    <div className="card-icon primary">
                         <FileText size={20} />
                     </div>
                     <h3 className="card-title">Resumo</h3>
@@ -80,7 +80,7 @@ Os sistemas de gestão de bases de dados são utilizados em praticamente todas a
         return (
             <div className="summary-view error">
                 <div className="card-header">
-                    <div className="card-icon green">
+                    <div className="card-icon primary">
                         <FileText size={20} />
                     </div>
                     <h3 className="card-title">Resumo</h3>
@@ -98,7 +98,7 @@ Os sistemas de gestão de bases de dados são utilizados em praticamente todas a
     return (
         <div className="summary-view">
             <div className="card-header">
-                <div className="card-icon green">
+                <div className="card-icon primary">
                     <FileText size={20} />
                 </div>
                 <h3 className="card-title">Resumo do Documento</h3>

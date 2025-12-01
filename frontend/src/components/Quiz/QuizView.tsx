@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import sanitizeHtml from 'sanitize-html';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, ChevronRight, Check, X, Zap, RotateCcw, Play, FileText, Plus } from 'lucide-react';
+import { Target, ChevronRight, Check, X, RotateCcw, Play, FileText, Plus } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { useGamification } from '../../context/GamificationContext';
 import { useAuth } from '@clerk/clerk-react';
 import { createClerkSupabaseClient } from '../../lib/supabase';
 import { supabaseQuizService } from '../../services/supabaseQuizService';
@@ -46,7 +45,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
     const [classes, setClasses] = useState<Class[]>([]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
 
-    const { addEnergy, currentEra, civilizationXP } = useGamification();
+
 
     useEffect(() => {
         fetchDocuments();
@@ -147,9 +146,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
         setShowResult(true);
 
         if (correct) {
-            addEnergy(50); // 50 XP por acerto
-            setShowXPGain(true);
-            setTimeout(() => setShowXPGain(false), 2000);
+            // Logic for correct answer
         }
     };
 
@@ -218,19 +215,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
 
         return (
             <div className="quiz-view">
-                <AnimatePresence>
-                    {showXPGain && (
-                        <motion.div
-                            className="xp-gain-notification"
-                            initial={{ opacity: 0, y: -20, scale: 0.8 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -30, scale: 0.6 }}
-                        >
-                            <Zap size={16} />
-                            <span>+50 XP</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+
 
                 <div className="card-header">
                     <div className="card-icon orange">
@@ -319,7 +304,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                             {isCorrect ? <Check size={32} /> : <X size={32} />}
                         </div>
                         <p className="result-text">
-                            {isCorrect ? '🎉 Correto! +50 XP' : '❌ Incorreto. Tenta novamente!'}
+                            {isCorrect ? '🎉 Correto!' : '❌ Incorreto. Tenta novamente!'}
                         </p>
                         {currentQuestion.explanation && (
                             <p className="explanation-text" dangerouslySetInnerHTML={{ __html: sanitizeHtml(currentQuestion.explanation) }} />
@@ -380,10 +365,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                     <p className="quiz-subtitle">Selecione um documento e teste seus conhecimentos</p>
                 </div>
 
-                <div className="xp-badge">
-                    <Zap size={18} fill="currentColor" />
-                    <span>{currentEra} • {civilizationXP} XP</span>
-                </div>
+
             </div>
 
             <div className="quiz-content-grid">
@@ -444,7 +426,7 @@ export const QuizView: React.FC<QuizViewProps> = ({ documentId: propDocumentId }
                     {selectedDocumentId ? (
                         <>
                             <div className="mb-8">
-                                <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-600">
+                                <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'var(--color-bg-tertiary)', color: 'var(--color-primary)' }}>
                                     <FileText size={48} />
                                 </div>
                                 <h2 className="text-2xl font-bold text-gray-800 mb-2">

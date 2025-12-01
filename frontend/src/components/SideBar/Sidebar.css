@@ -1,7 +1,7 @@
 .sidebar {
     width: 280px;
     height: 100vh;
-    background-color: #ffffff;
+    background-color: var(--color-bg-secondary);
     border-right: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
@@ -9,7 +9,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 40;
+    z-index: 30;
     transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
@@ -73,7 +73,7 @@
 }
 
 .generate-btn {
-    background-color: #d1fae5;
+    background-color: var(--color-primary);
     color: white;
     border: none;
     border-radius: 99px;
@@ -89,14 +89,14 @@
 }
 
 .generate-btn:hover {
-    background-color: #a7f3d0;
+    background-color: var(--color-accent-secondary);
     transform: translateY(-1px);
 }
 
 /* Mini Generate Button */
 .generate-btn-mini {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: var(--color-primary);
+    color: white;
     border: none;
     border-radius: 50%;
     width: 48px;
@@ -114,7 +114,7 @@
 }
 
 .generate-btn-mini:hover {
-    background-color: #a7f3d0;
+    background-color: var(--color-accent-secondary);
     transform: translateY(-1px);
 }
 
@@ -130,7 +130,7 @@
     align-items: center;
     gap: 1rem;
     padding: 0.75rem 1rem;
-    color: #4b5563;
+    color: var(--color-text-secondary);
     text-decoration: none;
     border-radius: 0.75rem;
     font-weight: 500;
@@ -138,12 +138,12 @@
 }
 
 .nav-link:hover {
-    background-color: #f3f4f6;
+    background-color: var(--color-bg-tertiary);
     color: var(--color-primary);
 }
 
 .nav-link.active {
-    background-color: #ecfdf5;
+    background-color: var(--color-bg-tertiary);
     color: var(--color-primary);
     font-weight: 600;
 }
@@ -185,7 +185,7 @@
 .avatar {
     width: 40px;
     height: 40px;
-    background-color: #fcd34d;
+    background-color: var(--color-primary-light);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -201,7 +201,7 @@
 
 .user-name {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--color-text-primary);
     font-size: 0.875rem;
 }
 

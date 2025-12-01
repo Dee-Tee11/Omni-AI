@@ -21,270 +21,9 @@
     margin: 0;
 }
 
-.btn-create {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.btn-create:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-}
-
-.classes-layout {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 2rem;
-    min-height: 600px;
-}
-
-.classes-sidebar {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
-}
-
-.classes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.class-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 2px solid transparent;
-}
-
-.class-card:hover {
-    background: #f3f4f6;
-    transform: translateX(4px);
-}
-
-.class-card.active {
-    background: #ecfdf5;
-    border-color: #10b981;
-}
-
-.class-color {
-    width: 4px;
-    height: 60px;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-
-.class-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.class-info h3 {
-    margin: 0 0 0.25rem 0;
-    font-size: 1rem;
-    color: #1f2937;
-    font-weight: 600;
-}
-
-.class-info p {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.875rem;
-    color: #6b7280;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.class-stats {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.75rem;
-    color: #9ca3af;
-}
-
-.class-stats span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.btn-delete-small {
-    padding: 0.5rem;
-    background: transparent;
-    border: none;
-    color: #ef4444;
-    cursor: pointer;
-    border-radius: 0.375rem;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-.btn-delete-small:hover {
-    background: #fee2e2;
-}
-
-.class-content {
-    background: white;
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    overflow-y: auto;
-    max-height: calc(100vh - 200px);
-}
-
-.content-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid #f3f4f6;
-}
-
-.content-header h2 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.75rem;
-    color: #1f2937;
-}
-
-.content-header p {
-    margin: 0;
-    color: #6b7280;
-    font-size: 1rem;
-}
-
-.content-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.content-section h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 1rem 0;
-    font-size: 1.25rem;
-    color: #1f2937;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.section-header h3 {
-    margin: 0;
-}
-
-.btn-add-small {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    background: #10b981;
-    color: white;
-    border: none;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-add-small:hover {
-    background: #059669;
-    transform: translateY(-1px);
-}
-
-.empty-message {
-    color: #9ca3af;
-    font-style: italic;
-    padding: 1rem;
-    text-align: center;
-    background: #f9fafb;
-    border-radius: 0.5rem;
-}
-
-.items-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.item-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid #e5e7eb;
-}
-
-.item-card:hover {
-    background: #f3f4f6;
-    border-color: #10b981;
-    transform: translateX(4px);
-}
-
-.item-card-doc {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f9fafb;
-    border-radius: 0.5rem;
-    border: 1px solid #e5e7eb;
-}
-
-.doc-name {
-    flex: 1;
-    font-weight: 500;
-    color: #1f2937;
-}
-
-.doc-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-generate {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 0.875rem;
-    background: white;
-    color: #10b981;
-    border: 1.5px solid #10b981;
-    border-radius: 0.375rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
 
 .btn-generate:hover:not(:disabled) {
-    background: #10b981;
+    background: var(--color-primary);
     color: white;
     transform: translateY(-1px);
 }
@@ -334,7 +73,7 @@
 .empty-state button {
     margin-top: 1rem;
     padding: 0.75rem 1.5rem;
-    background: #10b981;
+    background: var(--color-primary);
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -344,7 +83,7 @@
 }
 
 .empty-state button:hover {
-    background: #059669;
+    background: var(--color-accent-secondary);
 }
 
 .modal-overlay {
@@ -474,13 +213,13 @@
 }
 
 .btn-confirm {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: var(--color-accent-gradient);
     color: white;
 }
 
 .btn-confirm:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 148, 148, 0.4);
 }
 
 .btn-confirm:disabled {
@@ -522,7 +261,7 @@
 
 .spin {
     animation: spin 1s linear infinite;
-    color: #10b981;
+    color: var(--color-primary);
 }
 
 @keyframes spin {
@@ -606,7 +345,7 @@
 
 .question-number {
     display: inline-block;
-    background: #10b981;
+    background: var(--color-primary);
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 999px;
@@ -661,7 +400,7 @@
 }
 
 .option-preview.correct .option-letter {
-    background: #10b981;
+    background: var(--color-primary);
     color: white;
 }
 
@@ -672,7 +411,7 @@
 }
 
 .check-icon {
-    color: #10b981;
+    color: var(--color-primary);
     flex-shrink: 0;
 }
 

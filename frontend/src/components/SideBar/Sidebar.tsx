@@ -6,7 +6,6 @@ import {
     Trophy,
     Backpack,
     Zap,
-    Flame,
     Sparkles,
     Settings,
     ChevronLeft,
@@ -16,7 +15,6 @@ import {
     FileText
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useGamification } from '../../context/GamificationContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -29,7 +27,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClose, onToggleMini }) => {
     const location = useLocation();
-    const { streak } = useGamification();
     const { user } = useUser();
 
     const isActive = (path: string) => location.pathname === path;
@@ -40,11 +37,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                 <div className="sidebar-logo">
                     {!isMini && (
                         <>
-                            <span className="text-emerald-600">Omni</span>
-                            <span className="text-gray-800">AI</span>
+                            <span className="text-[var(--color-primary)]">Lexis</span>
                         </>
                     )}
-                    {isMini && <span className="text-emerald-600 text-2xl font-bold">O</span>}
+                    {isMini && <span className="text-[var(--color-primary)] text-2xl font-bold">L</span>}
                 </div>
 
                 {/* Collapse Arrow Button */}
@@ -57,18 +53,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                 </button>
             </div>
 
-            {!isMini && (
-                <button onClick={onUploadClick} className="generate-btn">
-                    <Sparkles size={18} />
-                    Gerar novas perguntas
-                </button>
-            )}
 
-            {isMini && (
-                <button onClick={onUploadClick} className="generate-btn-mini" title="Gerar novas perguntas">
-                    <Sparkles size={20} />
-                </button>
-            )}
+
+
 
             <nav className="nav-menu">
                 <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`} title={isMini ? "Página inicial" : ""}>
@@ -96,27 +83,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onUploadClick, isOpen, isMini, onClos
                     {!isMini && "Resumos"}
                 </Link>
 
-                <Link to="/stats" className={`nav-link ${isActive('/stats') ? 'active' : ''}`} title={isMini ? "Placar" : ""}>
-                    <Trophy />
-                    {!isMini && "Placar"}
-                </Link>
 
-                <Link to="/inventory" className={`nav-link ${isActive('/inventory') ? 'active' : ''}`} title={isMini ? "Mochila" : ""}>
-                    <Backpack />
-                    {!isMini && "Mochila"}
-                </Link>
 
-                <Link to="/updates" className={`nav-link ${isActive('/updates') ? 'active' : ''}`} title={isMini ? "Atualizar" : ""}>
-                    <Zap />
-                    {!isMini && "Atualizar"}
-                </Link>
 
-                {!isMini && (
-                    <div className="streak-widget">
-                        <Flame className="streak-fire" size={20} fill="currentColor" />
-                        <span>{streak} sequência de dias</span>
-                    </div>
-                )}
             </nav>
 
             <div className="sidebar-footer">
