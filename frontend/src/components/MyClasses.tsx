@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileText, Brain, Trophy, Plus, Trash2, ChevronRight, Sparkles } from 'lucide-react';
+import { BookOpen, FileText, Brain, Trophy, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { createClerkSupabaseClient } from '../lib/supabase';
 import { supabaseClassService } from '../services/supabaseClassService';
@@ -14,7 +14,7 @@ import './MyClasses.css';
 
 const MyClasses: React.FC = () => {
     const navigate = useNavigate();
-    const { getToken } = useAuth();
+    const { getToken, userId } = useAuth();
 
     // Helper to get authenticated client
     const getClient = async () => {
@@ -72,7 +72,7 @@ const MyClasses: React.FC = () => {
     };
 
     const handleCreateClass = async () => {
-        if (!newClassName.trim()) return;
+        if (!newClassName.trim() || !userId) return;
 
         try {
             const client = await getClient();
@@ -80,7 +80,7 @@ const MyClasses: React.FC = () => {
                 name: newClassName,
                 description: newClassDescription,
                 color: newClassColor,
-            });
+            }, userId);
             setNewClassName('');
             setNewClassDescription('');
             setNewClassColor('#10b981');
@@ -228,181 +228,192 @@ const MyClasses: React.FC = () => {
 
     return (
         <div className="my-classes-container">
+            {/* Header Section */}
             <div className="classes-header">
-                <h1><BookOpen size={32} /> Minhas Aulas</h1>
+                <div className="title-group">
+                    <div className="title">
+                        <BookOpen size={32} strokeWidth={2.5} />
+                        <h1>Minhas Aulas</h1>
+                    </div>
+                    <p className="subtitle">Gerencie suas aulas e conteúdos de estudo</p>
+                </div>
                 <button className="btn-create" onClick={() => setShowCreateModal(true)}>
                     <Plus size={20} /> Nova Aula
                 </button>
             </div>
 
-            <div className="classes-layout">
-                <div className="classes-sidebar">
-                    {classes.length === 0 ? (
-                        <div className="empty-state">
-                            <p>Nenhuma aula criada ainda</p>
-                            <button onClick={() => setShowCreateModal(true)}>
-                                Criar primeira aula
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="classes-list">
-                            {classes.map((cls) => (
+            <div className="content-grid">
+                {/* Left Panel: Classes List */}
+                <div className="classes-panel">
+                    <h2 className="panel-title">Aulas Disponíveis</h2>
+
+                    <div className="classes-list">
+                        {classes.length === 0 ? (
+                            <div className="text-gray-400 text-center py-4">
+                                Nenhuma aula encontrada
+                            </div>
+                        ) : (
+                            classes.map((cls) => (
                                 <div
                                     key={cls.id}
-                                    className={`class-card ${selectedClass?.id === cls.id ? 'active' : ''}`}
+                                    className={`class-item ${selectedClass?.id === cls.id ? 'selected' : ''}`}
                                     onClick={() => handleSelectClass(cls.id)}
                                 >
-                                    <div className="class-color" style={{ backgroundColor: cls.color }} />
-                                    <div className="class-info">
-                                        <h3>{cls.name}</h3>
-                                        {cls.description && <p>{cls.description}</p>}
-                                        <div className="class-stats">
-                                            <span><FileText size={14} /> {cls.documentIds.length}</span>
-                                            <span><Brain size={14} /> {cls.flashcardSetIds.length}</span>
-                                            <span><Trophy size={14} /> {cls.quizSetIds.length}</span>
+                                    <div className="class-color-indicator" style={{ backgroundColor: cls.color }} />
+                                    <div className="class-info-compact">
+                                        <div className="class-name">{cls.name}</div>
+                                        <div className="class-stats-compact">
+                                            <span><FileText size={12} /> {cls.documentIds.length}</span>
+                                            <span><Brain size={12} /> {cls.flashcardSetIds.length}</span>
+                                            <span><Trophy size={12} /> {cls.quizSetIds.length}</span>
                                         </div>
                                     </div>
                                     <button
-                                        className="btn-delete-small"
+                                        className="btn-delete-icon"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDeleteClass(cls.id);
                                         }}
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={14} />
                                     </button>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            ))
+                        )}
+                    </div>
                 </div>
 
-                <div className="class-content">
-                    {selectedClass ? (
-                        <>
-                            <div className="content-header">
-                                <div>
-                                    <h2>{selectedClass.name}</h2>
-                                    {selectedClass.description && <p>{selectedClass.description}</p>}
-                                </div>
-                            </div>
+                {/* Right Panel: Main Area */}
+                <div className="main-area">
+                    {generating && (
+                        <div className="loading-overlay">
+                            <Loader2 className="spinning" size={48} />
+                            <h3 className="text-xl font-bold text-gray-800">Gerando conteúdo...</h3>
+                            <p className="text-gray-500">Aguarde um momento</p>
+                        </div>
+                    )}
 
-                            <div className="content-sections">
-                                <div className="content-section">
+                    {selectedClass ? (
+                        <div className="class-details-container">
+                            {/* Header removed as per user request to show content immediately */}
+
+                            <div className="content-sections-grid">
+                                {/* Documents Section */}
+                                <div className="content-section-card">
                                     <div className="section-header">
                                         <h3><FileText size={20} /> Documentos ({selectedClass.documentIds.length})</h3>
                                         <button className="btn-add-small" onClick={() => setShowAddDocModal(true)}>
                                             <Plus size={16} /> Adicionar
                                         </button>
                                     </div>
-                                    {selectedClass.documentIds.length === 0 ? (
-                                        <p className="empty-message">Nenhum documento adicionado</p>
-                                    ) : (
-                                        <div className="items-list">
-                                            {selectedClass.documentIds.map((docId) => (
+                                    <div className="items-list-scroll">
+                                        {selectedClass.documentIds.length === 0 ? (
+                                            <p className="empty-message">Nenhum documento</p>
+                                        ) : (
+                                            selectedClass.documentIds.map((docId) => (
                                                 <div key={docId} className="item-card-doc">
-                                                    <FileText size={18} />
-                                                    <span className="doc-name">{getDocumentName(docId)}</span>
+                                                    <div className="doc-info">
+                                                        <FileText size={18} />
+                                                        <span className="doc-name">{getDocumentName(docId)}</span>
+                                                    </div>
                                                     <div className="doc-actions">
                                                         <button
-                                                            className="btn-generate"
+                                                            className="btn-action"
                                                             onClick={() => handleGenerateFlashcards(docId)}
                                                             disabled={generating}
+                                                            title="Gerar Flashcards"
                                                         >
-                                                            <Brain size={14} /> Flashcards
+                                                            <Brain size={14} />
                                                         </button>
                                                         <button
-                                                            className="btn-generate"
+                                                            className="btn-action"
                                                             onClick={() => handleGenerateQuiz(docId)}
                                                             disabled={generating}
+                                                            title="Gerar Quiz"
                                                         >
-                                                            <Trophy size={14} /> Quiz
+                                                            <Trophy size={14} />
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="content-section">
+                                {/* Flashcards Section */}
+                                <div className="content-section-card">
                                     <h3><Brain size={20} /> Flashcards ({selectedClass.flashcardSets.length})</h3>
-                                    {selectedClass.flashcardSets.length === 0 ? (
-                                        <p className="empty-message">Nenhum conjunto de flashcards criado</p>
-                                    ) : (
-                                        <div className="items-list">
-                                            {selectedClass.flashcardSets.map((set) => (
+                                    <div className="items-list-scroll">
+                                        {selectedClass.flashcardSets.length === 0 ? (
+                                            <p className="empty-message">Nenhum flashcard</p>
+                                        ) : (
+                                            selectedClass.flashcardSets.map((set) => (
                                                 <div
                                                     key={set.id}
                                                     className="item-card"
                                                     onClick={() => navigate(`/flashcards?setId=${set.id}`)}
                                                 >
-                                                    <Brain size={18} />
+                                                    <div className="item-icon"><Brain size={18} /></div>
                                                     <div className="item-info">
                                                         <strong>{set.name}</strong>
                                                         <small>{set.flashcards.length} cards</small>
                                                     </div>
-                                                    <div className="item-actions">
-                                                        <button
-                                                            className="btn-delete-small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteFlashcardSet(set.id);
-                                                            }}
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                        <ChevronRight size={16} />
-                                                    </div>
+                                                    <button
+                                                        className="btn-delete-icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteFlashcardSet(set.id);
+                                                        }}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="content-section">
+                                {/* Quizzes Section */}
+                                <div className="content-section-card">
                                     <h3><Trophy size={20} /> Quizzes ({selectedClass.quizSets.length})</h3>
-                                    {selectedClass.quizSets.length === 0 ? (
-                                        <p className="empty-message">Nenhum quiz criado</p>
-                                    ) : (
-                                        <div className="items-list">
-                                            {selectedClass.quizSets.map((set) => (
+                                    <div className="items-list-scroll">
+                                        {selectedClass.quizSets.length === 0 ? (
+                                            <p className="empty-message">Nenhum quiz</p>
+                                        ) : (
+                                            selectedClass.quizSets.map((set) => (
                                                 <div
                                                     key={set.id}
                                                     className="item-card"
                                                     onClick={() => navigate(`/quiz?setId=${set.id}`)}
                                                 >
-                                                    <Trophy size={18} />
+                                                    <div className="item-icon"><Trophy size={18} /></div>
                                                     <div className="item-info">
                                                         <strong>{set.name}</strong>
-                                                        <small>
-                                                            {set.questions.length} questões
-                                                            {set.bestScore && ` • Melhor: ${set.bestScore}%`}
-                                                        </small>
+                                                        <small>{set.questions.length} questões</small>
                                                     </div>
-                                                    <div className="item-actions">
-                                                        <button
-                                                            className="btn-delete-small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteQuizSet(set.id);
-                                                            }}
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                        <ChevronRight size={16} />
-                                                    </div>
+                                                    <button
+                                                        className="btn-delete-icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteQuizSet(set.id);
+                                                        }}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </>
+                        </div>
                     ) : (
-                        <div className="no-selection">
-                            <BookOpen size={64} />
-                            <p>Selecione uma aula para ver o conteúdo</p>
+                        <div className="empty-selection-state">
+                            <BookOpen size={80} strokeWidth={1} className="empty-icon" />
+                            <h2 className="empty-title">Selecione uma aula</h2>
+                            <p className="empty-desc">
+                                Escolha uma aula da lista à esquerda para ver seus documentos, flashcards e quizzes.
+                            </p>
                         </div>
                     )}
                 </div>
@@ -490,15 +501,6 @@ const MyClasses: React.FC = () => {
                                 Adicionar
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {generating && (
-                <div className="generating-overlay">
-                    <div className="generating-spinner">
-                        <Sparkles size={48} className="spin" />
-                        <p>Gerando conteúdo...</p>
                     </div>
                 </div>
             )}

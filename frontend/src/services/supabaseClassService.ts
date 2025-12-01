@@ -23,13 +23,14 @@ export const supabaseClassService = {
         }));
     },
 
-    async createClass(client: SupabaseClient, data: { name: string; description?: string; color?: string }): Promise<Class> {
+    async createClass(client: SupabaseClient, data: { name: string; description?: string; color?: string }, userId: string): Promise<Class> {
         const { data: newClass, error } = await client
             .from('classes')
             .insert([{
                 name: data.name,
                 description: data.description,
-                color: data.color
+                color: data.color,
+                user_id: userId
             }])
             .select()
             .single();

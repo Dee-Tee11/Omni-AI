@@ -50,7 +50,7 @@ const AppContent: React.FC = () => {
                     : 'sidebar-full-open'
                 : 'sidebar-closed'
                 }`}>
-                <div className="w-full px-4">
+                <div className="w-full px-4 flex-1 flex flex-col">
                     <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/library" element={<div className="p-8">Library (Coming Soon)</div>} />
